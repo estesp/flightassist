@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>FlightAssist</title>
+    <link rel='stylesheet' href='/stylesheets/style.css'/>
+  </head>
+  <body>
+    <h1>Flight Assist</h1>
+    <div class="container">
+        
+			This demo application requires a TripIt account. You will be required to authorize
+      this application to access your TripIt data so trip/plans can be queried to demonstrate
+      flight lookup and alternate flight demonstrations using flight information queried from
+      the FlightStats API.
+	    <div id='echo' class="messageInfo"></div>
+	    <div class="buttonContainer">
+        <button class="btn btn-tertiary" id='connect' onclick="gotoTripIt()">TripIt Authentication</button>
+	    </div>
+      <div class="infomsg">
+        This application demonstrates the use of various API providers (TripIt, FlightStats) to
+        assemble flight status/assistance via a simple Bluemix-hosted web application.
+      </div>
+	</div>
+    <script type="text/javascript" src="/js/index.js"></script>
+  </body>
+</html>

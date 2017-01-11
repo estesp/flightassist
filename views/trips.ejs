@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>FlightAssist | TripIt Trips</title>
+    <link rel='stylesheet' href='/stylesheets/style.css'/>
+  </head>
+  <body>
+    <h1>FlightAssist: Current TripIt Plans</h1>
+    <div class="container">
+    <% if (typeof no_data !== "undefined") { %>
+      <div class="status">
+        An error has occurred!
+        <div class="fbinfobox">
+          <div class="errorinfo">
+            <b>Message:</b> <%= message %><br/>
+          </div>
+        </div>
+      </div>
+    <% } else { %>
+      <div class="status">
+        TripIt Profile: <%= name %> | <%= company %> | <%= home %>
+      </div>
+      <div class="fbinfobox">
+        <div class="fbdetail">
+          Loading trips..
+        </div>
+      </div>
+        <div class="throbber-div" id="throbber-div-1">
+          <img src="/images/throbber.gif" class="ajax-loader"/>
+        </div>
+ 	</div>
+  <script type="text/javascript" src="/js/trips.js"></script>
+  <% } %>
+  </body>
+</html>
