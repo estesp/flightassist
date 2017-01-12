@@ -10,7 +10,7 @@ exports.getFlights = function(req, res) {
     var authToken = req.session.oauth_access_token;
     var authTokenSecret = req.session.oauth_access_token_secret;
     tripit.getTrips(user, authToken, authTokenSecret).then(function(data) {
-        console.log("Accessed TripIt trip/flight data for user" + user);
+        console.log("Returning TripIt trip/flight data for user " + user);
         res.send(data);
     }).catch(function(err) {
         console.log("Error retriving trip data: " + err);

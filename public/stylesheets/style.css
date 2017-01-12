@@ -78,10 +78,7 @@ h1 {
   font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
   font-weight: 400;
   font-size: .950em;
-  float: right;
   vertical-align: top;
-  text-align: right;
-
 }
 
 .select-style {
@@ -145,7 +142,7 @@ h1 {
   display: none;
 }
 
-.search-results {
+.flight-results {
   display: none;
 }
 
