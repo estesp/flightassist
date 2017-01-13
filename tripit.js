@@ -179,7 +179,7 @@ function processTripData(user, tripJSON, newData) {
     }
     var cachedTrips = tripJSON.Trips;
     for (var k = 0; k < cachedTrips.length; k++) {
-        if (updateTripMap.exists(cachedTrips[k].id)) {
+        if (updateTripMap.has(cachedTrips[k].id)) {
             // if we got an update on this trip, update it
             cachedTrips[k] = updateTripMap.get(cachedTrips[k].id);
             updateTripMap.delete(cachedTrips[k].id);
