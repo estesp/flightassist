@@ -18,12 +18,16 @@ var cloudant = Cloudant({ url: cURL, plugin: 'promises' });
 var requestTokenSecrets = {};
 
 module.exports = {
-    authorize: function(callBackURL, res) {
+    authorize: function(callBackURL, isMobile, res) {
+        var baseURL = "https://www.tripit.com";
+        if (isMobile === "true") {
+            baseURL = "https://m.tripit.com";
+        }
         client.getRequestToken().then(function(results) {
             var token = results[0],
                 secret = results[1];
             requestTokenSecrets[token] = secret;
-            res.redirect("https://www.tripit.com/oauth/authorize?oauth_token=" + token + "&oauth_callback=" + callBackURL);
+            res.redirect(baseURL+"/oauth/authorize?oauth_token=" + token + "&oauth_callback=" + callBackURL);
         }, function(error) {
             res.send(error);
         });

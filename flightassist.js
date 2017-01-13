@@ -28,7 +28,7 @@ app.use(session({ secret: 'wilson dog ball' }));
 app.get('/', routes.index);
 
 app.get("/authorize", function(req, res) {
-    tripit.authorize(baseURL + "flights", res);
+    tripit.authorize(baseURL + "flights", req.query.mobile, res);
 });
 
 app.get("/flights", function(req, res) {
