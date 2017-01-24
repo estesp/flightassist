@@ -12,7 +12,7 @@ function parseTripsForFlights() {
         document.getElementById('throbber-div-1').style.display = 'none';
         var epochms = Date.now();
         var date = new Date(epochms);
-        var today = date.getYear()+"-"+twoDigitDayMonth(date.getMonth()+1)+"-"+twoDigitDayMonth(date.getDate()+1);
+        var today = date.getYear() + "-" + twoDigitDayMonth(date.getMonth() + 1) + "-" + twoDigitDayMonth(date.getDate() + 1);
 
         var tripList = respData.Trips;
         if (tripList === undefined || tripList.length === 0) {
@@ -24,8 +24,8 @@ function parseTripsForFlights() {
         currentTrip = findCurrentTrip(epochms, tripList);
         if (isEmpty(currentTrip)) {
             // notify the user that there are no trips at the current time
-            var html = "Your next trip ("+ tripList[0].display_name+" to "+ tripList[0].primary_location +") ";
-            html += "starts on "+ tripList[0].start_date +" and is more than 24 hours in the future. ";
+            var html = "Your next trip (" + tripList[0].display_name + " to " + tripList[0].primary_location + ") ";
+            html += "starts on " + tripList[0].start_date + " and is more than 24 hours in the future. ";
             html += "Please check back within 24 hours of your first flight for further details.";
             results.innerHTML = html;
             return;
@@ -34,6 +34,12 @@ function parseTripsForFlights() {
         if (upcomingFlights.length === 0) {
             // no flights to show; give the user a few trip details and how
             // long until the first flight?
+            var htmlResp = "Your trip (" + tripList[0].display_name + ") to " + tripList[0].primary_location + " is coming soon, but either you ";
+            htmlResp += "have no flights associated with this trip or they are more than 24 hours ";
+            htmlResp += " in the future. If you have flights, check back when your first segment ";
+            htmlResp += " is 24 hours or less away.";
+            results.innerHTML = htmlResp;
+            return;
         }
     });
 }
@@ -51,7 +57,10 @@ function findCurrentTrip(today, tripList) {
 
 function findFlights(today, jsonTrip) {
     // we have a trip object; look through the air segments for flights today (or next 24 hrs)
-    var flightSegments = jsonTrip.air_segments.Segment;
+    var flightSegments = [];
+    for (var n = 0; n < jsonTrip.air_segments.length; n++) {
+        flightSegments = flightSegments.concat(jsonTrip.air_segments[n].Segment);
+    }
     // we need the air segments to be in sorted by flight start time order
     flightSegments.sort(sortFlightSegments);
 
@@ -60,7 +69,7 @@ function findFlights(today, jsonTrip) {
     var originAirport = "";
     var currentTerminus = "";
     for (var i = 0; i < flightSegments.length; i++) {
-        var flightStartDate = Date.parse(flightSegments[i].StartDateTime.date);
+        var flightStartDate = Date.parse(makeDateTimeString(flightSegments[i].StartDateTime));
         if (isSoonOrWithin(today, flightStartDate, Date.now()) && (originAirport === "")) {
             // flight is coming up in next 24 hours; this is the first segment found
             upcomingFlights = [flightSegments[i]];
@@ -68,35 +77,36 @@ function findFlights(today, jsonTrip) {
                 originAirport = flightSegments[i].start_airport_code;
             }
             currentTerminus = flightSegments[i].end_airport_code;
-            var endDateObj = flightSegments[i].EndDateTime;
-            var dateStr = endDateObj.date+"T"+endDateObj.time+endDateObj.utc_offset;
-            lastFlightEnd = Date.parse(dateStr);
+            lastFlightEnd = Date.parse(makeDateTimeString(flightSegments[i].EndDateTime));
         } else {
             // if we already have found a flight, see if another flight starts in
             // 12 hours or less from the current (last found) aiport code and not 
             // ending at the original airport code..then we probably have a
             // connecting flight, filtering out quick round-trips (back to origin same day)
-            var startDateTime = flightSegments[i].StartDateTime;
-            var flightStartTime = Date.parse(startDateTime.date+"T"+startDateTime.time+startDateTime.utc_offset);
+            var flightStartTime = Date.parse(makeDateTimeString(flightSegments[i].StartDateTime));
             if ((currentTerminus !== "") && (lastFlightEnd > 0)) {
                 if (lessThanTwelve(lastFlightEnd, flightStartTime) &&
-                 (currentTerminus === flightSegments[i].start_airport_code) &&
-                 (flightSegments[i].end_airport_code !== originAirport)) {
-                     //this appears to be a connecting flight to the first flight
-                     currentTerminus = flightSegments[i].end_airport_code;
-                     var endDateTime = flightSegments[i].EndDateTime;
-                     lastFlightEnd = Date.parse(endDateTime.date+"T"+endDateTime.time+endDateTime.utc_offset);
-                     upcomingFlights.push(flightSegments[i]);
+                    (currentTerminus === flightSegments[i].start_airport_code) &&
+                    (flightSegments[i].end_airport_code !== originAirport)) {
+                    //this appears to be a connecting flight to the first flight
+                    currentTerminus = flightSegments[i].end_airport_code;
+                    lastFlightEnd = Date.parse(makeDateTimeString(flightSegments[i].EndDateTime));
+                    upcomingFlights.push(flightSegments[i]);
                 }
             }
         }
     }
+    return upcomingFlights;
 }
 
 function sortFlightSegments(a, b) {
-    var datetimeA = Date.parse(a.StartDateTime.date+"T"+a.StartDateTime.time+a.StartDateTime.utc_offset);
-    var datetimeB = Date.parse(b.StartDateTime.date+"T"+b.StartDateTime.time+b.StartDateTime.utc_offset);
+    var datetimeA = Date.parse(makeDateTimeString(a.StartDateTime));
+    var datetimeB = Date.parse(makeDateTimeString(b.StartDateTime));
     return datetimeA - datetimeB;
+}
+
+function makeDateTimeString(tripitDateTimeObj) {
+    return tripitDateTimeObj.date + "T" + tripitDateTimeObj.time + tripitDateTimeObj.utc_offset;
 }
 
 function sortTrips(a, b) {
@@ -104,24 +114,24 @@ function sortTrips(a, b) {
 }
 
 function lessThanTwelve(flightEnd, flightStart) {
-    if ((flightStart - flightEnd) <= 12*60*60*1000) {
+    if ((flightStart - flightEnd) <= 12 * 60 * 60 * 1000) {
         return true;
     }
     return false;
 }
 //returns whether today is within a day of a start date or prior/equal to end
 function isSoonOrWithin(today, start, end) {
-    if (((start - today) <= 24*60*60*1000) && ((end - today) >= 0)) {
+    if (((start - today) <= 24 * 60 * 60 * 1000) && ((end - today) >= 0)) {
         return true;
     }
     return false;
 }
 
 // run our trip info query as soon as we have page load
-if(window.attachEvent) {
+if (window.attachEvent) {
     window.attachEvent('onload', parseTripsForFlights);
 } else {
-    if(window.onload) {
+    if (window.onload) {
         var curronload = window.onload;
         var newonload = function(evt) {
             curronload(evt);
@@ -134,9 +144,9 @@ if(window.attachEvent) {
 }
 
 function twoDigitDayMonth(number) {
-    var str = ""+number;
+    var str = "" + number;
     if (str.length === 1) {
-        str = "0"+str;
+        str = "0" + str;
     }
     return str;
 }
@@ -150,8 +160,7 @@ function createXHR() {
         } catch (e1) {
             try {
                 return new ActiveXObject('Microsoft.XMLHTTP');
-            } catch (e2) {
-            }
+            } catch (e2) {}
         }
     }
     return null;
