@@ -10,7 +10,8 @@ var express = require('express'),
     http = require('http'),
     path = require('path'),
     tripit = require('./tripit.js'),
-    flightstats = require('./flightstats.js');
+    flightstats = require('./flightstats.js'),
+    weather = require('./weather.js');
 var app = express();
 
 // if deploying to a different route, update this variable:
@@ -74,6 +75,9 @@ app.get("/tripdata", tripdata.getFlights);
 // endpoints for flightstats API lookups:
 app.get("/flightinfo", flightstats.getFlightInfo);
 app.get("/conninfo", flightstats.getConnections);
+
+// weather endpoint
+app.get("/weather", weather.getThreeDayForecast);
 
 http.createServer(app).listen(app.get('port'), function() {
     console.log('FlightAssist server listening on port ' + app.get('port'));
