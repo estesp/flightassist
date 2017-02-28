@@ -71,7 +71,7 @@ function parseTripsForFlights() {
                 "<p class='flightDetail'>A <span class='duration'>{{duration}}</span> flight from " +
                 "<span class='airportCode'>{{start_airport_code}}</span> <span class='aiportCity'>{{start_city_name}}, {{start_country_code}}</span> " +
                 "to <span class='airportCode'>{{end_airport_code}}</span> <span class='aiportCity'>{{end_city_name}}, {{end_country_code}}</span> " +
-                "on <span class='flight'>{{.marketing_airline_code}} {{.marketing_flight_number}}</span></p>" +
+                "on <span class='flight'>{{marketing_airline_code}} {{marketing_flight_number}}</span></p>" +
                 "</td></tr><tr class='flightExtraRow'><td class='flightExtraCol'>" +
                 "<p class='flightExtraDetail'>Departs: <span class='datetime'>{{StartDateTime.date}} {{StartDateTime.time}} {{StartDateTime.utc_offset}}</span><br/>" +
                 "Arrives: <span class='datetime'>{{EndDateTime.date}} {{EndDateTime.time}} {{EndDateTime.utc_offset}}</span>" +
