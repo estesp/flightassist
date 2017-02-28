@@ -21,8 +21,9 @@ function parseTripsForFlights() {
             return;
         }
         tripList.sort(sortTrips);
-        currentTrip = findCurrentTrip(epochms, tripList);
-        if (isEmpty(currentTrip)) {
+        var forceFlightView = (respData.forceFlights === 1);
+        var currentTrip = findCurrentTrip(epochms, tripList);
+        if (isEmpty(currentTrip) && !forceFlightView) {
             // notify the user that there are no trips at the current time
             var html = "Your next trip (" + tripList[0].display_name + " to " + tripList[0].primary_location + ") ";
             html += "starts on " + tripList[0].start_date + " and is more than 24 hours in the future. ";
@@ -30,7 +31,14 @@ function parseTripsForFlights() {
             results.innerHTML = html;
             return;
         }
-        upcomingFlights = findFlights(epochms, currentTrip);
+        // developer mode way to test viewing flights even if the next trip
+        // is further than 24 hours in the future
+        if (forceFlightView) {
+            // we've sorted the trips and we know the list isn't empty, so
+            // just point to the first trip in the list
+            currentTrip = tripList[0];
+        }
+        upcomingFlights = findFlights(epochms, currentTrip, forceFlightView);
         if (upcomingFlights.length === 0) {
             // no flights to show; give the user a few trip details and how
             // long until the first flight?
@@ -57,6 +65,7 @@ function parseTripsForFlights() {
             //   .end_gate (may not exist)
             //   .StartDateTime.{date, time, timezone, utc_offset}
             //   .EndDateTime.{date, time, timezone, utc_offset}
+            var flightResults = { searchResults: upcomingFlights };
             var resultsTmpl = "{{#searchResults}}\n" +
                 "<tr class='flightRow'><td colspan='2' class='flightCol'>" +
                 "<p class='flightDetail'>A <span class='duration'>{{duration}}</span> flight from " +
@@ -66,9 +75,10 @@ function parseTripsForFlights() {
                 "</td></tr><tr class='flightExtraRow'><td class='flightExtraCol'>" +
                 "<p class='flightExtraDetail'>Departs: <span class='datetime'>{{StartDateTime.date}} {{StartDateTime.time}} {{StartDateTime.utc_offset}}</span><br/>" +
                 "Arrives: <span class='datetime'>{{EndDateTime.date}} {{EndDateTime.time}} {{EndDateTime.utc_offset}}</span>" +
-                "</td><td class='flightExtraCol'>Seat: {{seats}}<br/>Departure Gate: {{start_gate}}<br/>Arrival Gate: {{end_gate}}</td></tr>";
+                "</td><td class='flightExtraCol'>Seat: {{seats}}<br/>Departure Gate: {{start_gate}}<br/>Arrival Gate: {{end_gate}}</td></tr>\n" +
+                "{{/searchResults}}";
 
-            var htmlOut = Mustache.render(resultsTmpl, upcomingFlights);
+            var htmlOut = Mustache.render(resultsTmpl, flightResults);
             results.innerHTML = "<table class='flightResults'>" + htmlOut + "</table>";
         }
     });
@@ -85,7 +95,7 @@ function findCurrentTrip(today, tripList) {
     return {};
 }
 
-function findFlights(today, jsonTrip) {
+function findFlights(today, jsonTrip, forceFlightView) {
     // we have a trip object; look through the air segments for flights today (or next 24 hrs)
     var flightSegments = [];
     for (var n = 0; n < jsonTrip.air_segments.length; n++) {
@@ -94,13 +104,20 @@ function findFlights(today, jsonTrip) {
     // we need the air segments to be in sorted by flight start time order
     flightSegments.sort(sortFlightSegments);
 
+    var now = Date.now();
+    // force current time offset to be at the beginning flight segment
+    // so in development mode we can test the flight view
+    if (forceFlightView) {
+        today = Date.parse(makeDateTimeString(flightSegments[0].StartDateTime));
+        now = today + 1;
+    }
     var upcomingFlights = [];
     var lastFlightEnd = 0;
     var originAirport = "";
     var currentTerminus = "";
     for (var i = 0; i < flightSegments.length; i++) {
         var flightStartDate = Date.parse(makeDateTimeString(flightSegments[i].StartDateTime));
-        if (isSoonOrWithin(today, flightStartDate, Date.now()) && (originAirport === "")) {
+        if (isSoonOrWithin(today, flightStartDate, now) && (originAirport === "")) {
             // flight is coming up in next 24 hours; this is the first segment found
             upcomingFlights = [flightSegments[i]];
             if (originAirport === "") {
