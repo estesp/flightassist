@@ -12,7 +12,7 @@ function parseTripsForFlights() {
         document.getElementById('throbber-div-1').style.display = 'none';
         var epochms = Date.now();
         var date = new Date(epochms);
-        var today = date.getYear() + "-" + twoDigitDayMonth(date.getMonth() + 1) + "-" + twoDigitDayMonth(date.getDate() + 1);
+        var today = date.getFullYear() + "-" + twoDigitDayMonth(date.getMonth() + 1) + "-" + twoDigitDayMonth(date.getDate() + 1);
 
         var tripList = respData.Trips;
         if (tripList === undefined || tripList.length === 0) {
@@ -40,6 +40,36 @@ function parseTripsForFlights() {
             htmlResp += " is 24 hours or less away.";
             results.innerHTML = htmlResp;
             return;
+        } else {
+            // display flight information
+            // - data set includes
+            //   .start_city_name
+            //   .start_country_code
+            //   .start_airport_code
+            //   .end_city_name
+            //   .end_country_code
+            //   .end_airport_code
+            //   .marketing_airline_code .marketing_flight_number (e.g. AA 5344 together)
+            //   .aircraft_display_name ("Canadair RJ 900")
+            //   .duration
+            //   .seats (may not exist)
+            //   .start_gate (may not exist)
+            //   .end_gate (may not exist)
+            //   .StartDateTime.{date, time, timezone, utc_offset}
+            //   .EndDateTime.{date, time, timezone, utc_offset}
+            var resultsTmpl = "{{#searchResults}}\n" +
+                "<tr class='flightRow'><td colspan='2' class='flightCol'>" +
+                "<p class='flightDetail'>A <span class='duration'>{{duration}}</span> flight from " +
+                "<span class='airportCode'>{{start_airport_code}}</span> <span class='aiportCity'>{{start_city_name}}, {{start_country_code}}</span> " +
+                "to <span class='airportCode'>{{end_airport_code}}</span> <span class='aiportCity'>{{end_city_name}}, {{end_country_code}}</span> " +
+                "on <span class='flight'>{{.marketing_airline_code}} {{.marketing_flight_number}}</span></p>" +
+                "</td></tr><tr class='flightExtraRow'><td class='flightExtraCol'>" +
+                "<p class='flightExtraDetail'>Departs: <span class='datetime'>{{StartDateTime.date}} {{StartDateTime.time}} {{StartDateTime.utc_offset}}</span><br/>" +
+                "Arrives: <span class='datetime'>{{EndDateTime.date}} {{EndDateTime.time}} {{EndDateTime.utc_offset}}</span>" +
+                "</td><td class='flightExtraCol'>Seat: {{seats}}<br/>Departure Gate: {{start_gate}}<br/>Arrival Gate: {{end_gate}}</td></tr>";
+
+            var htmlOut = Mustache.render(resultsTmpl, upcomingFlights);
+            results.innerHTML = "<table class='flightResults'>" + htmlOut + "</table>";
         }
     });
 }

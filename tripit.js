@@ -27,7 +27,7 @@ module.exports = {
             var token = results[0],
                 secret = results[1];
             requestTokenSecrets[token] = secret;
-            res.redirect(baseURL+"/oauth/authorize?oauth_token=" + token + "&oauth_callback=" + callBackURL);
+            res.redirect(baseURL + "/oauth/authorize?oauth_token=" + token + "&oauth_callback=" + callBackURL);
         }, function(error) {
             res.send(error);
         });
@@ -142,6 +142,9 @@ function processTripData(user, tripJSON, newData) {
         putUserTrips(tripJSON);
         return tripJSON;
     }
+    // first, clear any old trips from the cache (e.g. trips now in the past)
+    tripJSON = removePastTrips(Date.now(), tripJSON);
+    // set a new cache timestamp
     tripJSON.timestamp = newData.timestamp;
     // we have cached data; see if any trips are updated in the newData object from
     // the API call and update the cache
@@ -228,6 +231,19 @@ function processTripData(user, tripJSON, newData) {
     }
     tripJSON.Trips = cachedTrips;
     putUserTrips(tripJSON);
+    return tripJSON;
+}
+
+function removePastTrips(epochMS, tripJSON) {
+    var updatedTrips = [];
+    var cachedTrips = tripJSON.Trips;
+    for (var k = 0; k < cachedTrips.length; k++) {
+        var endTrip = Date.parse(cachedTrips[k].end_date);
+        if (endTrip > epochMS) {
+            updatedTrips.push(cachedTrips[k]);
+        }
+    }
+    tripJSON.Trips = updatedTrips;
     return tripJSON;
 }
 
