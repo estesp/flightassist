@@ -66,20 +66,24 @@ function parseTripsForFlights() {
             //   .StartDateTime.{date, time, timezone, utc_offset}
             //   .EndDateTime.{date, time, timezone, utc_offset}
             var flightResults = { searchResults: upcomingFlights };
+            var resultsStart = "<div class='resultsHeader'>Upcoming flights for your trip <span class='tripName'>" + tripList[0].display_name + "</span> to <span class='tripDestination'>" + tripList[0].primary_location + "</span> are listed below:</div>" +
+                "<div class='resultsContainer'>";
+
             var resultsTmpl = "{{#searchResults}}\n" +
-                "<tr class='flightRow'><td colspan='2' class='flightCol'>" +
-                "<p class='flightDetail'>A <span class='duration'>{{duration}}</span> flight from " +
-                "<span class='airportCode'>{{start_airport_code}}</span> <span class='aiportCity'>{{start_city_name}}, {{start_country_code}}</span> " +
-                "to <span class='airportCode'>{{end_airport_code}}</span> <span class='aiportCity'>{{end_city_name}}, {{end_country_code}}</span> " +
-                "on <span class='flight'>{{marketing_airline_code}} {{marketing_flight_number}}</span></p>" +
-                "</td></tr><tr class='flightExtraRow'><td class='flightExtraCol'>" +
-                "<p class='flightExtraDetail'>Departs: <span class='datetime'>{{StartDateTime.date}} {{StartDateTime.time}} {{StartDateTime.utc_offset}}</span><br/>" +
-                "Arrives: <span class='datetime'>{{EndDateTime.date}} {{EndDateTime.time}} {{EndDateTime.utc_offset}}</span>" +
-                "</td><td class='flightExtraCol'>Seat: {{seats}}<br/>Departure Gate: {{start_gate}}<br/>Arrival Gate: {{end_gate}}</td></tr>\n" +
+                "<div class='flightid'>{{marketing_airline_code}} {{marketing_flight_number}} <span class='flighttime'>{{duration}}</span></div>" +
+                "<div class='flightresults'><table id='{{marketing_airline_code}}{{marketing_flight_number}}'>" +
+                "<tr class='airport'><td class='airportDetails'><div class='airportCode'>{{start_airport_code}}</div><br/><span class='airportLoc'>{{start_city_name}}, {{start_country_code}}</span></td>" +
+                "<td class='flightInfo'>" +
+                "<div class='flightTime'><span class='fieldTitle'>Departs:</span> {{StartDateTime.date}} {{StartDateTime.time}}</div><br/>" +
+                "<div class='gateInfo'><span class='fieldTitle'>Gate:</span> {{start_gate}}</div></td></tr>" +
+                "<tr class='airport'><td class='airportDetails'><div class='airportCode'>{{end_airport_code}}</div><br/><span class='airportLoc'>{{end_city_name}}, {{end_country_code}}</span></td>" +
+                "<td class='flightInfo'>" +
+                "<div class='flightTime'><span class='fieldTitle'>Arrives:</span> {{EndDateTime.date}} {{EndDateTime.time}}</div><br/>" +
+                "<div class='gateInfo'><span class='fieldTitle'>Gate:</span> {{end_gate}}</div></td></tr></table></div>" +
                 "{{/searchResults}}";
 
             var htmlOut = Mustache.render(resultsTmpl, flightResults);
-            results.innerHTML = "<table class='flightResults'>" + htmlOut + "</table>";
+            results.innerHTML = resultsStart + htmlOut + "</div>";
         }
     });
 }

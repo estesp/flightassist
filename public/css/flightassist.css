@@ -1,0 +1,88 @@
+.resultsHeader {
+    padding: 10px;
+    margin-left: 20px;
+    font-size: 85%;
+}
+
+.tripName {
+    font-weight: 600;
+    font-size: 95%;
+    color: rgb(58, 84, 76);
+}
+
+.tripDestination {
+    font-weight: 600;
+    font-size: 95%;
+    color: rgb(58, 84, 76);
+}
+
+.resultsContainer {
+    text-align: left;
+    width: 80%;
+    margin-left: 2%;
+}
+
+.flightresults {
+    background: #efefef;
+    opacity: 0.8;
+}
+
+.flightid {
+    font-size: 110%;
+    width: 50%;
+    background: #3f3f3f;
+    color: white;
+    font-weight: bold;
+    padding: 2px;
+    padding-left: 15px;
+    border-top: 1px solid #bbbbbb;
+    border-right: 1px solid #cccccc;
+}
+
+.flighttime {
+    font-size: 95%;
+    font-weight: 300;
+    font-style: italic;
+    color: #dddddd;
+}
+
+.airport {
+    margin: 10px;
+    padding: 25px;
+}
+
+.airportDetails {
+    padding-right: 15px;
+    padding-left: 5px;
+    width: 30%;
+}
+
+.airportCode {
+    font-size: 170%;
+    font-weight: bold;
+    color: #558a26;
+}
+
+.airportLoc {
+    font-size: 80%;
+    font-weight: 300;
+    font-style: italic;
+    color: #9d9d9d;
+}
+
+.flightInfo {
+    text-align: top;
+    margin-top: 2px;
+    padding-left: 10px;
+    border-left: 1px solid #cdcdcd;
+}
+
+.fieldTitle {
+    font-weight: bold;
+}
+
+.flightTime,
+.gateInfo {
+    color: #5d5d5d;
+    font-weight: 400;
+}
