@@ -86,3 +86,24 @@
     color: #5d5d5d;
     font-weight: 400;
 }
+
+.flightstatInfo {
+    display: none;
+}
+
+.weatherInfo {
+    display: none;
+}
+
+.weatherCity {
+    font-weight: 500;
+}
+
+.weatherData {
+    color: #0033cd;
+    font-size: 80%;
+    padding: 3px;
+    margin: 0px;
+    background: #cccccc;
+    opacity: 0.9;
+}

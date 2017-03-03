@@ -49,8 +49,8 @@ module.exports = {
             var wURLObj = url.parse(weatherURL);
             var host = wURLObj.host;
             var authStr = wURLObj.auth;
-            //build up weather 3day query (GET /v1/geocode/{latitude}/{longitude}/forecast/intraday/3day.json)
-            var endpoint = "/api/weather/v1/geocode/" + req.query.lat + "/" + req.query.lon + "/forecast/intraday/3day.json";
+            //build up weather 3day query (GET /v1/geocode/{latitude}/{longitude}/forecast/daily/3day.json)
+            var endpoint = "/api/weather/v1/geocode/" + req.query.lat + "/" + req.query.lon + "/forecast/daily/3day.json";
 
             var options = {
                 host: host,

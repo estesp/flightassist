@@ -12,7 +12,7 @@ function parseTripsForFlights() {
         document.getElementById('throbber-div-1').style.display = 'none';
         var epochms = Date.now();
         var date = new Date(epochms);
-        var today = date.getFullYear() + "-" + twoDigitDayMonth(date.getMonth() + 1) + "-" + twoDigitDayMonth(date.getDate() + 1);
+        var today = date.getFullYear() + "-" + twoDigitString(date.getMonth() + 1) + "-" + twoDigitString(date.getDate() + 1);
 
         var tripList = respData.Trips;
         if (tripList === undefined || tripList.length === 0) {
@@ -79,11 +79,17 @@ function parseTripsForFlights() {
                 "<tr class='airport'><td class='airportDetails'><div class='airportCode'>{{end_airport_code}}</div><br/><span class='airportLoc'>{{end_city_name}}, {{end_country_code}}</span></td>" +
                 "<td class='flightInfo'>" +
                 "<div class='flightTime'><span class='fieldTitle'>Arrives:</span> {{EndDateTime.date}} {{EndDateTime.time}}</div><br/>" +
-                "<div class='gateInfo'><span class='fieldTitle'>Gate:</span> {{end_gate}}</div></td></tr></table></div>" +
+                "<div class='gateInfo'><span class='fieldTitle'>Gate:</span> {{end_gate}}</div></td></tr></table>" +
+                "<div class='flightstatInfo' id='flightstats:{{marketing_airline_code}}:{{marketing_flight_number}}:{{StartDateTime.date}}:{{start_airport_code}}:{{end_airport_code}}'></div>" +
+                "<div class='weatherInfo' id='weather:{{marketing_airline_code}}:{{marketing_flight_number}}:{{start_airport_code}}:{{start_airport_latitude}}:{{start_airport_longitude}}:{{end_airport_code}}:{{end_airport_latitude}}:{{end_airport_longitude}}'></div>" +
+                "</div>\n" +
                 "{{/searchResults}}";
 
             var htmlOut = Mustache.render(resultsTmpl, flightResults);
             results.innerHTML = resultsStart + htmlOut + "</div>";
+            // trigger a custom event to fill in weather and flight status info
+            $('div.flightstatInfo').trigger('instantiate');
+            $('div.weatherInfo').trigger('instantiate');
         }
     });
 }
@@ -178,23 +184,71 @@ function isSoonOrWithin(today, start, end) {
     return false;
 }
 
-// run our trip info query as soon as we have page load
-if (window.attachEvent) {
-    window.attachEvent('onload', parseTripsForFlights);
-} else {
-    if (window.onload) {
-        var curronload = window.onload;
-        var newonload = function(evt) {
-            curronload(evt);
-            parseTripsForFlights(evt);
-        };
-        window.onload = newonload;
-    } else {
-        window.onload = parseTripsForFlights;
-    }
-}
+$(document).ready(function() {
+    // set up handlers to load weather and flight info
+    $('#flight-results').on("instantiate", 'div.flightstatInfo', function(e) {
+        // ID format = 'flightstats:AA:nnnn:date:BBB:CCC' where
+        //   AA   = airline shortcode
+        //   nnnn = flight number
+        //   date = flight depart date as "YYYY-MM-DD"
+        //   BBB  = origin airport code
+        //   CCC  = destination airport code
+        var infoArray = this.id.split(":");
 
-function twoDigitDayMonth(number) {
+
+    });
+
+    $('#flight-results').on("instantiate", 'div.weatherInfo', function(e) {
+        // ID format = 'weather:AA:nnnn:BBB:lat:lon:CCC:lat:lon' where
+        //   AA   = airline shortcode
+        //   nnnn = flight number
+        //   BBB  = origin airport code + latitude and longitude
+        //   CCC  = destination airport code + latitude and longitude
+        var infoArray = this.id.split(":");
+        // get weather for the origin and destination cities from our API
+        var idOrigin = "weather" + infoArray[3] + "-" + infoArray[1] + infoArray[2];
+        $(this).append("<div id='" + idOrigin + "' class='weatherData'></div>");
+        var idDest = "weather" + infoArray[6] + "-" + infoArray[1] + infoArray[2];
+        $(this).append("<div id='" + idDest + "' class='weatherData'></div>");
+        $(this).css("display", "block");
+
+        var origURL = "/weather?locID=" + infoArray[3] + "&lat=" + infoArray[4] + "&lon=" + infoArray[5];
+        var destURL = "/weather?locID=" + infoArray[6] + "&lat=" + infoArray[7] + "&lon=" + infoArray[8];
+        ajaxCall(origURL, "GET", function(respData) {
+            // call weather endpoint for origin
+            for (var i = 0; i < respData.forecasts.length; i++) {
+                if (respData.forecasts[i].num == 1) {
+                    if (!isEmpty(respData.forecasts[i].day)) {
+                        $('#' + idOrigin).html("<span class='weatherCity'>" +
+                            infoArray[3] + "</span> " + respData.forecasts[i].day.narrative);
+                    } else {
+                        $('#' + idOrigin).html("<span class='weatherCity'>" +
+                            infoArray[3] + "</span> " + respData.forecasts[i].night.narrative);
+                    }
+                }
+            }
+        });
+        ajaxCall(destURL, "GET", function(respData) {
+            // call weather endpoint for destination
+            for (var i = 0; i < respData.forecasts.length; i++) {
+                if (respData.forecasts[i].num == 1) {
+                    if (!isEmpty(respData.forecasts[i].day)) {
+                        $('#' + idDest).html("<span class='weatherCity'>" +
+                            infoArray[6] + "</span> " + respData.forecasts[i].day.narrative);
+                    } else {
+                        $('#' + idDest).html("<span class='weatherCity'>" +
+                            infoArray[6] + "</span> " + respData.forecasts[i].night.narrative);
+                    }
+                }
+            }
+        });
+    });
+
+    //begin parse routine for flight data
+    parseTripsForFlights();
+});
+
+function twoDigitString(number) {
     var str = "" + number;
     if (str.length === 1) {
         str = "0" + str;
