@@ -3,13 +3,12 @@
 
 function parseTripsForFlights() {
     // notify searching
-    document.getElementById('throbber-div-1').style.display = 'block';
-    document.getElementById('flight-results').style.display = 'none';
+    $('#throbber-div-1').css("display", "block");
+    $('#flight-results').css("display", "none");
     // first we need trip data..
     ajaxCall("/tripdata", "GET", function(respData) {
-        var results = document.getElementById('flight-results');
-        results.style.display = 'block';
-        document.getElementById('throbber-div-1').style.display = 'none';
+        $('#throbber-div-1').css("display", "none");
+        $('#flight-results').css("display", "block");
         var epochms = Date.now();
         var date = new Date(epochms);
         var today = date.getFullYear() + "-" + twoDigitString(date.getMonth() + 1) + "-" + twoDigitString(date.getDate() + 1);
@@ -17,7 +16,7 @@ function parseTripsForFlights() {
         var tripList = respData.Trips;
         if (tripList === undefined || tripList.length === 0) {
             // report to the user they have no future trips at all in TripIt
-            results.innerHTML = "You have no upcoming trips in your TripIt profile!";
+            $("#flight-results").html("You have no upcoming trips in your TripIt profile!");
             return;
         }
         tripList.sort(sortTrips);
@@ -28,7 +27,7 @@ function parseTripsForFlights() {
             var html = "Your next trip (" + tripList[0].display_name + " to " + tripList[0].primary_location + ") ";
             html += "starts on " + tripList[0].start_date + " and is more than 24 hours in the future. ";
             html += "Please check back within 24 hours of your first flight for further details.";
-            results.innerHTML = html;
+            $("#flight-results").html(html);
             return;
         }
         // developer mode way to test viewing flights even if the next trip
@@ -46,7 +45,7 @@ function parseTripsForFlights() {
             htmlResp += "have no flights associated with this trip or they are more than 24 hours ";
             htmlResp += " in the future. If you have flights, check back when your first segment ";
             htmlResp += " is 24 hours or less away.";
-            results.innerHTML = htmlResp;
+            $("#flight-results").html(htmlResp);
             return;
         } else {
             // display flight information
@@ -86,7 +85,7 @@ function parseTripsForFlights() {
                 "{{/searchResults}}";
 
             var htmlOut = Mustache.render(resultsTmpl, flightResults);
-            results.innerHTML = resultsStart + htmlOut + "</div>";
+            $("#flight-results").html(resultsStart + htmlOut + "</div>");
             // trigger a custom event to fill in weather and flight status info
             $('div.flightstatInfo').trigger('instantiate');
             $('div.weatherInfo').trigger('instantiate');
