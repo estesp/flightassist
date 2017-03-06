@@ -194,8 +194,24 @@ $(document).ready(function() {
         //   BBB  = origin airport code
         //   CCC  = destination airport code
         var infoArray = this.id.split(":");
-
-
+        var idStatus = "fstatus-" + infoArray[0] + "-" + infoArray[1] + "-" + infoArray[5];
+        $(this).append("<div id='" + idStatus + "' class='statusDetail'></div>");
+        $(this).css("display", "block");
+        var divID = this.id;
+        var qURL = "/flightinfo?airline=" + infoArray[1] + "&flightnum=" + infoArray[2] + "&date=" + infoArray[3] +
+            "&airport=" + infoArray[5]; // default lookup direction is "arriving" so put destination airport
+        ajaxCall(qURL, "GET", function(respData) {
+            // call flightstats endpoint and fill in current known flight status
+            var flightStatus = "unknown";
+            var flightEquipment = "unknown equipment";
+            var flight = infoArray[1] + infoArray[2];
+            if (!isEmpty(respData.flights)) {
+                flightStatus = respData.flights[0].status.description;
+                flightEquipment = respData.flights[0].equipment.scheduled.name;
+            }
+            $('#' + idStatus).html("<span class='flightStatsStatus'>" +
+                flight + " Status:</span> " + flightStatus + " on equipment: " + flightEquipment);
+        });
     });
 
     $('#flight-results').on("instantiate", 'div.weatherInfo', function(e) {
@@ -214,39 +230,31 @@ $(document).ready(function() {
 
         var origURL = "/weather?locID=" + infoArray[3] + "&lat=" + infoArray[4] + "&lon=" + infoArray[5];
         var destURL = "/weather?locID=" + infoArray[6] + "&lat=" + infoArray[7] + "&lon=" + infoArray[8];
-        ajaxCall(origURL, "GET", function(respData) {
-            // call weather endpoint for origin
-            for (var i = 0; i < respData.forecasts.length; i++) {
-                if (respData.forecasts[i].num == 1) {
-                    if (!isEmpty(respData.forecasts[i].day)) {
-                        $('#' + idOrigin).html("<span class='weatherCity'>" +
-                            infoArray[3] + "</span> " + respData.forecasts[i].day.narrative);
-                    } else {
-                        $('#' + idOrigin).html("<span class='weatherCity'>" +
-                            infoArray[3] + "</span> " + respData.forecasts[i].night.narrative);
-                    }
-                }
-            }
-        });
-        ajaxCall(destURL, "GET", function(respData) {
-            // call weather endpoint for destination
-            for (var i = 0; i < respData.forecasts.length; i++) {
-                if (respData.forecasts[i].num == 1) {
-                    if (!isEmpty(respData.forecasts[i].day)) {
-                        $('#' + idDest).html("<span class='weatherCity'>" +
-                            infoArray[6] + "</span> " + respData.forecasts[i].day.narrative);
-                    } else {
-                        $('#' + idDest).html("<span class='weatherCity'>" +
-                            infoArray[6] + "</span> " + respData.forecasts[i].night.narrative);
-                    }
-                }
-            }
-        });
+        showCityWeatherInfo(origURL, infoArray[3], idOrigin);
+        showCityWeatherInfo(destURL, infoArray[6], idDest);
     });
 
     //begin parse routine for flight data
     parseTripsForFlights();
 });
+
+// helper function for displaying weather data in a specific DIV for an airport city code
+function showCityWeatherInfo(url, cityCode, divID) {
+    ajaxCall(url, "GET", function(respData) {
+        // call weather endpoint and fill in "narrative" response into div
+        for (var i = 0; i < respData.forecasts.length; i++) {
+            if (respData.forecasts[i].num == 1) {
+                if (!isEmpty(respData.forecasts[i].day)) {
+                    $('#' + divID).html("<span class='weatherCity'>" +
+                        cityCode + "</span> " + respData.forecasts[i].day.narrative);
+                } else {
+                    $('#' + divID).html("<span class='weatherCity'>" +
+                        cityCode + "</span> " + respData.forecasts[i].night.narrative);
+                }
+            }
+        }
+    });
+}
 
 function twoDigitString(number) {
     var str = "" + number;

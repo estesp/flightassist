@@ -107,3 +107,17 @@
     background: #cccccc;
     opacity: 0.9;
 }
+
+.statusDetail {
+    color: #002266;
+    font-size: 70%;
+    padding: 2px;
+    margin: 0px;
+    background: #999999;
+    border-top: 1px solid #555555;
+    opacity: 0.9;
+}
+
+.flightStatsStatus {
+    font-weight: 500;
+}
