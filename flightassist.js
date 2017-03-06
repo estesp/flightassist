@@ -69,15 +69,28 @@ app.get("/flights", function(req, res) {
     });
 });
 
+// wrap all AJAX-used methods to do an XHR check to limit use from outside of
+// our application:
+app.use("/i/\*", function(req, res, next) {
+    if (req.xhr === true) {
+        next();
+    } else {
+        // reject API calls not from our application
+        console.log("Non-Xhr request to API from: " + req.hostname + " (IP: " + req.ip + ")\nHeaders: " +
+            "%j\nQuery: %j", req.headers, req.query);
+        res.status(403).send("API access forbidden.");
+    }
+});
+
 // called via AJAX method to query user's trip data; return current flights
-app.get("/tripdata", tripdata.getFlights);
+app.get("/i/tripdata", tripdata.getFlights);
 
 // endpoints for flightstats API lookups:
-app.get("/flightinfo", flightstats.getFlightInfo);
-app.get("/conninfo", flightstats.getConnections);
+app.get("/i/flightinfo", flightstats.getFlightInfo);
+app.get("/i/conninfo", flightstats.getConnections);
 
 // weather endpoint
-app.get("/weather", weather.getThreeDayForecast);
+app.get("/i/weather", weather.getThreeDayForecast);
 
 http.createServer(app).listen(app.get('port'), function() {
     console.log('FlightAssist server listening on port ' + app.get('port'));

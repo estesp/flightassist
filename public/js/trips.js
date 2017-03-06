@@ -6,7 +6,7 @@ function parseTripsForFlights() {
     $('#throbber-div-1').css("display", "block");
     $('#flight-results').css("display", "none");
     // first we need trip data..
-    ajaxCall("/tripdata", "GET", function(respData) {
+    ajaxCall("/i/tripdata", "GET", function(respData) {
         $('#throbber-div-1').css("display", "none");
         $('#flight-results').css("display", "block");
         var epochms = Date.now();
@@ -197,7 +197,7 @@ $(document).ready(function() {
         $(this).append("<div id='" + idStatus + "' class='statusDetail'></div>");
         $(this).css("display", "block");
         var divID = this.id;
-        var qURL = "/flightinfo?airline=" + infoArray[1] + "&flightnum=" + infoArray[2] + "&date=" + infoArray[3] +
+        var qURL = "/i/flightinfo?airline=" + infoArray[1] + "&flightnum=" + infoArray[2] + "&date=" + infoArray[3] +
             "&airport=" + infoArray[5]; // default lookup direction is "arriving" so put destination airport
         ajaxCall(qURL, "GET", function(respData) {
             // call flightstats endpoint and fill in current known flight status
@@ -227,8 +227,8 @@ $(document).ready(function() {
         $(this).append("<div id='" + idDest + "' class='weatherData'></div>");
         $(this).css("display", "block");
 
-        var origURL = "/weather?locID=" + infoArray[3] + "&lat=" + infoArray[4] + "&lon=" + infoArray[5];
-        var destURL = "/weather?locID=" + infoArray[6] + "&lat=" + infoArray[7] + "&lon=" + infoArray[8];
+        var origURL = "/i/weather?locID=" + infoArray[3] + "&lat=" + infoArray[4] + "&lon=" + infoArray[5];
+        var destURL = "/i/weather?locID=" + infoArray[6] + "&lat=" + infoArray[7] + "&lon=" + infoArray[8];
         showCityWeatherInfo(origURL, infoArray[3], idOrigin);
         showCityWeatherInfo(destURL, infoArray[6], idDest);
     });
@@ -263,31 +263,14 @@ function twoDigitString(number) {
     return str;
 }
 
-function createXHR() {
-    if (typeof XMLHttpRequest != 'undefined') {
-        return new XMLHttpRequest();
-    } else {
-        try {
-            return new ActiveXObject('Msxml2.XMLHTTP');
-        } catch (e1) {
-            try {
-                return new ActiveXObject('Microsoft.XMLHTTP');
-            } catch (e2) {}
-        }
-    }
-    return null;
-}
-
 function ajaxCall(url, method, resultFn) {
-    var xhr = createXHR();
-
-    xhr.onreadystatechange = function() {
-        if (xhr.readyState == 4) {
-            resultFn(JSON.parse(xhr.responseText));
-        }
-    };
-    xhr.open(method, url, true);
-    xhr.send(null);
+    $.ajax({
+        method: method,
+        url: url,
+        cache: false,
+    }).done(function(results) {
+        resultFn(results);
+    });
 }
 
 function isEmpty(obj) {

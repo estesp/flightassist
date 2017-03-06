@@ -32,8 +32,6 @@ module.exports = {
         });
     },
     getConnections: function(req, resp) {
-        // NOTE: requires this fix: https://github.com/jhermsmeier/node-flightstats/pull/8
-        //       to work properly for the "firstflightout" query
         // get connecting flights options
         // requires the following in the query string:
         // - date = YYYY-MM-DD HH:MM:SS (time to start search)
