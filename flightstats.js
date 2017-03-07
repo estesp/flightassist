@@ -1,7 +1,18 @@
 /* Retrieve data from FlightStats API */
 
 var FlightStatsAPI = require("flightstats");
+var Cloudant = require('cloudant');
 
+// cloudant credentials URL
+var cURL = "";
+if (process.env.DEVMODE === "true") {
+    cURL = process.env.CLOUDANT_URL;
+} else {
+    var vcap_services = JSON.parse(process.env.VCAP_SERVICES);
+    cURL = vcap_services.cloudantNoSQLDB[0].credentials.url;
+}
+
+var cloudant = Cloudant({ url: cURL, plugin: 'promises' });
 var flightstats = new FlightStatsAPI({
     appId: process.env.FLIGHTSTATS_APP_ID,
     apiKey: process.env.FLIGHTSTATS_APP_KEY
@@ -27,7 +38,7 @@ module.exports = {
                 resp.send(err);
                 return;
             }
-            console.log("flight lookup response: " + data);
+            console.log("sending flight lookup response for %j%j", req.query.airline, req.query.flightnum);
             resp.send(data);
         });
     },
@@ -39,21 +50,72 @@ module.exports = {
         // - arrairport = arrival airport code (e.g. SFO)
         // - numhours = number of hours to search from start
         // - results = number of results to return
-        var opts = {
-            date: new Date(Date.parse(req.query.date)),
-            departureAirport: req.query.depairport,
-            arrivalAirport: req.query.arrairport,
-            numHours: req.query.numhours,
-            maxResults: req.query.results,
-        };
-        flightstats.firstFlightOut(opts, function(err, data) {
-            if (err) {
-                console.log("error looking up flight connections: " + err);
-                resp.send(err);
+
+        // Look up cache first for connections data..
+        var fingerprint = req.query.date + "_" + req.query.depairport + "_" + req.query.arrairport +
+            "_" + req.query.numhours + "_" + req.query.results;
+        getCachedData(fingerprint).then(function(data) {
+            var now = Date.now();
+            if ((now - data.cachetime) > 120 * 60 * 1000) {
+                // data older than 2 hours; don't use cache
+                console.log("Expiring cached connections data for " + fingerprint);
+                data.expired = true;
+            }
+            return data;
+        }).catch(function(err) {
+            console.log("[getCachedFlightConnectionsData] Cloudant lookup error/empty: " + err);
+        }).then(function(data) {
+            if (!isEmpty(data) && !data.expired) {
+                // use cached connections data
+                console.log("using cached connecting flight data for " + fingerprint);
+                resp.send(data);
                 return;
             }
-            console.log("flight connections response: " + data);
-            resp.send(data);
+            // no cache or cache expired; query connection data
+            var opts = {
+                date: new Date(Date.parse(req.query.date)),
+                departureAirport: req.query.depairport,
+                arrivalAirport: req.query.arrairport,
+                numHours: req.query.numhours,
+                maxResults: req.query.results,
+            };
+            flightstats.firstFlightOut(opts, function(err, newData) {
+                if (err) {
+                    console.log("error looking up flight connections: " + err);
+                    resp.send(err);
+                    return;
+                }
+                if (!isEmpty(data)) {
+                    //set the rev ID so cache update works
+                    newData._rev = data._rev;
+                }
+                newData._id = fingerprint;
+                cacheConnectionsData(newData);
+                console.log("sending flight connections JSON response for %j - %j on %j", req.query.depairport, req.query.arrairport, req.query.date);
+                resp.send(newData);
+            });
         });
     }
 };
+
+function getCachedData(fingerprint) {
+    // query cloudant to see if we have cached any connections data for this query combination
+    var connDB = cloudant.db.use("connections");
+    return connDB.get(fingerprint);
+}
+
+function cacheConnectionsData(connData) {
+    var connDB = cloudant.db.use("connections");
+    connDB.insert(connData, function(err, data) {
+        if (err) {
+            console.log("Error on connections DB insert: " + err);
+        }
+    });
+}
+
+function isEmpty(obj) {
+    if (obj === undefined) {
+        return true;
+    }
+    return Object.keys(obj).length === 0;
+}

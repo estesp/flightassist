@@ -5,6 +5,7 @@ function parseTripsForFlights() {
     // notify searching
     $('#throbber-div-1').css("display", "block");
     $('#flight-results').css("display", "none");
+    $('#flight-alternates').css("display", "none");
     // first we need trip data..
     ajaxCall("/i/tripdata", "GET", function(respData) {
         $('#throbber-div-1').css("display", "none");
@@ -89,6 +90,15 @@ function parseTripsForFlights() {
             // trigger a custom event to fill in weather and flight status info
             $('div.flightstatInfo').trigger('instantiate');
             $('div.weatherInfo').trigger('instantiate');
+            // add a div with the info necessary to search for alternative connections
+            // collect: origin airport of first flight, destination airport of last flight
+            //          and start datetime of first flight
+            var startAirport = upcomingFlights[0].start_airport_code;
+            var endAirport = upcomingFlights[upcomingFlights.length - 1].end_airport_code;
+            var startTime = makeDateTimeString(upcomingFlights[0].StartDateTime);
+            var idAlternates = startAirport + "_" + endAirport + "_" + startTime;
+            $('#flight-alternates').append("<div id='" + idAlternates + "' class='alternateConnections'></div>");
+            $('#flight-alternates').trigger('instantiate');
         }
     });
 }
@@ -233,9 +243,157 @@ $(document).ready(function() {
         showCityWeatherInfo(destURL, infoArray[6], idDest);
     });
 
+    $("#flight-alternates").on("instantiate", function(e) {
+        $('#throbber-div-2').css("display", "block");
+        // first we need the data from our dynamically added child div to make the query..
+        var childDiv = $(this).children("div");
+        var infoArray = childDiv[0].id.split("_");
+        // default to 12 hours of search from depart time; 25 total results max
+        var qURL = "/i/conninfo?depairport=" + infoArray[0] + "&arrairport=" + infoArray[1] + "&numhours=12&results=25" +
+            "&date=" + infoArray[2] + "&includeCodeshares=false";
+        ajaxCall(qURL, "GET", function(respData) {
+            // need to filter the results to get rid of duplicate to our existing flight
+            // reservation and any other possible filtering (codeshares should be removed by the query)
+            alternativeFlights = filterFlights(respData);
+            $('#throbber-div-2').css("display", "none");
+            $('#flight-alternates').css("display", "block");
+            // run the results through a mustache template and display in the output div
+
+            var resultsStart = "<div class='resultsHeader'>Alternate route options between " +
+                "<span class='airportId'>" + infoArray[0] + "</span> and <span class='airportId'>" +
+                infoArray[1] + "</span>:</div><div class='resultsContainer'>";
+            var htmlOut = "";
+            for (var i = 0; i < alternativeFlights.length; i++) {
+                // output each option in a separate div with a numbered title
+                var opener = "<div class='altoption' id='" + alternativeFlights[i].flightPath + "'>" +
+                    "<div class='optionitem'>Option #" + (i + 1) + " (Total duration: " + alternativeFlights[i].elapsedTime + ")</div>";
+                var results = { searchResults: alternativeFlights[i].flights };
+                var resultsTmpl = "{{#searchResults}}\n" +
+                    "<div class='altflightid'>{{flightID}} <span class='flighttime'>{{duration}}</span></div>" +
+                    "<div class='altflightresults'>" +
+                    "<span class='airportFrom'>{{departureAirport}}</span>&nbsp;\u21D2&nbsp;<span class='airportTo'>{{arrivalAirport}}</span>" +
+                    "</div>" +
+                    "<div class='altflightTime'><span class='fieldTitle'>Departs:</span> {{departs}}</div>" +
+                    "<div class='altflightTime'><span class='fieldTitle'>Arrives:</span> {{arrives}}</div>\n" +
+                    "{{/searchResults}}";
+
+                htmlOut = htmlOut + opener + Mustache.render(resultsTmpl, results) + "</div>";
+            }
+            $(childDiv[0]).html(resultsStart + htmlOut + "</div>");
+        });
+    });
+
     //begin parse routine for flight data
     parseTripsForFlights();
 });
+
+function filterFlights(alternateFlights) {
+    var altFlights = [];
+    var curFlightDivs = $('div.flightstatInfo');
+    // we will store a string representing the current flight identifiers in order of the
+    // current ticketed trip so we can filter it out of the results
+    var curFlightPath = "";
+    for (var f = 0; f < curFlightDivs.length; f++) {
+        var idParts = curFlightDivs[f].id.split(":");
+        curFlightPath = curFlightPath + idParts[1] + idParts[2];
+    }
+    // create map of airport names and timezone data for showing time/date properly
+    var airportTZData = {};
+    for (var g = 0; g < alternateFlights.appendix.airports.length; g++) {
+        var airportName = alternateFlights.appendix.airports[g].fs;
+        var offsetHrs = "" + alternateFlights.appendix.airports[g].utcOffsetHours;
+        // API returns items like "-4"; we need "-04:00"; make the modifications to the string
+        offsetHrs = offsetHrs.substr(0, 1) + "0" + offsetHrs.substr(1) + ":00";
+        airportTZData[airportName] = offsetHrs;
+    }
+    for (var i = 0; i < alternateFlights.connections.length; i++) {
+        // generate the flight order and compare to current ticketed trip; removing it
+        // if it matches; done in called function for code clarity
+        route = createAlternateRoute(alternateFlights.connections[i], curFlightPath, airportTZData);
+        if (!isEmpty(route)) {
+            altFlights.push(route);
+        }
+    }
+    return altFlights;
+}
+
+function createAlternateRoute(connectionEntry, curFlightPath, airportTZData) {
+    var route = {
+        elapsedTime: humanElapsedTime(connectionEntry.elapsedTime),
+        score: connectionEntry.score,
+    };
+    var flightPath = "";
+    var flights = [];
+    for (var i = 0; i < connectionEntry.scheduledFlight.length; i++) {
+        var fInfo = connectionEntry.scheduledFlight[i];
+        var flightIdent = fInfo.flightNumber;
+        if (!isEmpty(fInfo.codeshares)) {
+            // because we queried with "includeCodeshares = false", any detail in codeshares
+            // means we have a "express" route where the 'real' airline is listed as a codeshare
+            // So, to match properly what the user expects, we will grab the airline code from
+            // the codeshares details:
+            flightIdent = fInfo.codeshares[0].carrierFsCode + flightIdent;
+        } else {
+            flightIdent = fInfo.carrierFsCode + flightIdent;
+        }
+        flightPath = flightPath + flightIdent;
+        // clean up messy flight depart/arrive time representation
+        var departParts = fInfo.departureTime.split(".");
+        var departTime = departParts[0] + airportTZData[fInfo.departureAirportFsCode];
+        var arriveParts = fInfo.arrivalTime.split(".");
+        var arriveTime = arriveParts[0] + airportTZData[fInfo.arrivalAirportFsCode];
+        // create the flight object representation
+        var flight = {
+            flightID: flightIdent,
+            departureAirport: fInfo.departureAirportFsCode,
+            arrivalAirport: fInfo.arrivalAirportFsCode,
+            departs: niceDate(new Date(Date.parse(departTime))),
+            arrives: niceDate(new Date(Date.parse(arriveTime))),
+            duration: humanElapsedTime(fInfo.elapsedTime),
+        };
+        flights.push(flight);
+    }
+    if (curFlightPath === flightPath) {
+        // this is the ticketed existing route; don't show as an alternative
+        return {};
+    }
+    route.flights = flights;
+    route.flightPath = flightPath;
+    return route;
+}
+
+function humanElapsedTime(minutes) {
+    if (minutes < 60) {
+        return "" + minutes + " min";
+    }
+    if (minutes < 120) {
+        return " 1 hr, " + (minutes - 60) + " min";
+    }
+    return "" + Math.floor(minutes / 60) + " hrs, " + Math.round(minutes % 60) + " min";
+}
+
+function niceDate(dObj) {
+    var month = twoDigitString(dObj.getMonth() + 1);
+    var day = twoDigitString(dObj.getDate());
+    var year = dObj.getFullYear();
+    var min = twoDigitString(dObj.getMinutes());
+    var ampm = "am";
+
+    var hr = dObj.getHours();
+    if (hr > 12) {
+        hr = hr - 12;
+        ampm = "pm";
+    }
+    if (hr == 12) {
+        ampm = "pm";
+    }
+    if (hr === 0) {
+        hr = 12;
+    }
+    var hour = twoDigitString(hr);
+
+    return year + "-" + month + "-" + day + " " + hour + ":" + min + ampm;
+}
 
 // helper function for displaying weather data in a specific DIV for an airport city code
 function showCityWeatherInfo(url, cityCode, divID) {

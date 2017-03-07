@@ -1,3 +1,18 @@
+.throbber-div {
+    display: none;
+    height: 48px;
+    position: relative;
+}
+
+img.ajax-loader {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    margin-left: -16px;
+    margin-top: -16px;
+    display: block;
+}
+
 .resultsHeader {
     padding: 10px;
     margin-left: 20px;
@@ -135,4 +150,31 @@
 
 .flightStatsStatus {
     font-weight: 500;
+}
+
+.altoption {
+    margin-top: 30px;
+    padding-left: 3px;
+    border-top: 2px solid #5d5d5d;
+    border-bottom: 2px solid #5d5d5d;
+    background: #3f3f3f;
+}
+
+.airportId,
+.airportFrom,
+.airportTo {
+    font-weight: 500;
+}
+
+.optionitem {
+    padding-left: 0px;
+    background: #cccccc;
+    color: #3f3f3f;
+    opacity: 0.7;
+}
+
+.altflightTime {
+    font-size: 70%;
+    margin-left: 15px;
+    padding: 2px;
 }

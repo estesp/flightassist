@@ -72,7 +72,7 @@ module.exports = {
                 newData._id = req.query.locID;
                 cacheWeatherData(newData);
                 // send data as response:
-                console.log("weather lookup response: " + newData);
+                console.log("sending JSON weather response for " + req.query.locID);
                 resp.send(newData);
             });
         });
