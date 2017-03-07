@@ -25,6 +25,14 @@ The [Weather Company weather data](https://console.ng.bluemix.net/catalog/servic
 variants of both of these services and connect them to your Bluemix
 hosted CF application.
 
+An additional getting started requirement is to create the databases used
+in the code in your newly created Cloudant instance. One simple way
+to do this is through the Bluemix console UI. Go to your Cloudant
+service and open the Cloudant UI console using the link from your
+service instance page. Once at the Cloudant console you will need to
+create the **trips**, **weather**, and **connections** databases for
+the cacheing code to work properly.
+
 The two non-Bluemix services used are API credentials for [TripIt](https://www.tripit.com/developer) and
 [FlightStats](https://developer.flightstats.com/api-docs/).
 

@@ -89,6 +89,9 @@ module.exports = {
                     //set the rev ID so cache update works
                     newData._rev = data._rev;
                 }
+                // cache this data in cloudant with the current epoch ms
+                var currentEpochms = Date.now();
+                newData.cachetime = currentEpochms;
                 newData._id = fingerprint;
                 cacheConnectionsData(newData);
                 console.log("sending flight connections JSON response for %j - %j on %j", req.query.depairport, req.query.arrairport, req.query.date);
