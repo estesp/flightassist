@@ -82,7 +82,7 @@ which will use the stored token data in the session for further
 calls to TripIt.
 
 The first callback simply calls `/tripdata` to perform a pull of
-the user's trip data from TripIt which we will post-process and 
+the user's trip data from TripIt which we will post-process and
 cache into Cloudant. Because of our cache, only flight changes will
 cause us to update, and a timestamp will decrease our round-trips
 to TripIt to only request "updated since" content.
@@ -92,7 +92,7 @@ to TripIt to only request "updated since" content.
 > provided in the "updated since" API flow. Without this, a user
 > might be shown a trip which they have already deleted in TripIt.
 
-Our processing of TripIt data throws away all information except for 
+Our processing of TripIt data throws away all information except for
 "air segment" data, as our application only shows details related to
 flights. This decreases our cacheing and resolution of updates when
 round-tripping to TripIt for any recent updates.
@@ -117,8 +117,12 @@ this additional information for the user of the application.
 
 ### Containerized application model
 
-The containerized deployment model for **flightassist** is still
-being resolved. Most likely we will take something like the weather
+The first common step to cntainerize an application is to Lift-n-Shift.  You may run the containerized **flightassist** in dev mode using the steps below:
+
+* Build the docker image:  `docker build -t flightassist .`
+* When running in dev mode, source the dot-env and run `docker run -p 3000:3000 -e DEVMODE=$DEVMODE -e DEV_URL=$DEV_URL -e FLIGHTSTATS_APP_ID=$FLIGHTSTATS_APP_ID -e FLIGHTSTATS_APP_KEY=$FLIGHTSTATS_APP_KEY -e TRIPIT_API_KEY=$TRIPIT_API_KEY -e TRIPIT_API_SECRET=$TRIPIT_API_SECRET -e CLOUDANT_URL=$CLOUDANT_URL -e WEATHER_URL=$WEATHER_URL -e FORCE_FLIGHT_VIEW=$FORCE_FLIGHT_VIEW flightassist`
+
+As a further step, most likely we will take something like the weather
 service and expose it as a separate containerized microservice used
 by the main application.
 
@@ -129,5 +133,3 @@ is still under discussion. Most likely we can have serverless
 functions backed by Cloudant for the simple data queries to weather
 and flight information. This document will be updated as these
 design decisions are implemented.
-
-
