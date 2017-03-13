@@ -117,7 +117,7 @@ this additional information for the user of the application.
 
 ### Containerized application model
 
-The first common step to cntainerize an application is to Lift-n-Shift.  You may run the containerized **flightassist** in dev mode using the steps below:
+The first common step to containerize an application is to Lift-n-Shift.  You may run the containerized **flightassist** in dev mode using the steps below:
 
 * Build the docker image:  `docker build -t flightassist .`
 * When running in dev mode, source the dot-env and run `docker run -p 3000:3000 -e DEVMODE=$DEVMODE -e DEV_URL=$DEV_URL -e FLIGHTSTATS_APP_ID=$FLIGHTSTATS_APP_ID -e FLIGHTSTATS_APP_KEY=$FLIGHTSTATS_APP_KEY -e TRIPIT_API_KEY=$TRIPIT_API_KEY -e TRIPIT_API_SECRET=$TRIPIT_API_SECRET -e CLOUDANT_URL=$CLOUDANT_URL -e WEATHER_URL=$WEATHER_URL -e FORCE_FLIGHT_VIEW=$FORCE_FLIGHT_VIEW flightassist`
