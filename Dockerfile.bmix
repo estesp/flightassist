@@ -15,7 +15,6 @@ RUN ls -la /usr/src/app/*
 
 RUN /bin/bash -c 'source /usr/src/app/dot-env; echo $DEVMODE'
 
-
 #have the docker daemon bind the app to port 8080
 EXPOSE 3000
 

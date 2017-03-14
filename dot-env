@@ -14,3 +14,8 @@ export TRIPIT_API_SECRET=<insert API secret>
 
 export CLOUDANT_URL=<insert cloudant URL from Bluemix credentials view>
 export WEATHER_URL=<insert Weather company URL from Bluemix credentials view>
+
+# for demo purposes you may want to force the UI to show flights even if
+# they aren't within the next 24 hour window; use this variable set to "true"
+# to force the UI to do so:
+# export FORCE_FLIGHT_VIEW=true

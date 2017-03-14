@@ -92,6 +92,31 @@ app.get("/i/conninfo", flightstats.getConnections);
 // weather endpoint
 app.get("/i/weather", weather.getThreeDayForecast);
 
-http.createServer(app).listen(app.get('port'), function() {
+var server = http.createServer(app).listen(app.get('port'), function() {
     console.log('FlightAssist server listening on port ' + app.get('port'));
 });
+
+// handle signals properly for when running without init/shell in container:
+
+// quit on ctrl-c when running docker in terminal
+process.on('SIGINT', function onSigint() {
+    console.info('Got SIGINT (aka ctrl-c in docker). Graceful shutdown ', new Date().toISOString());
+    shutdown();
+});
+
+// quit properly on docker stop
+process.on('SIGTERM', function onSigterm() {
+    console.info('Got SIGTERM (docker container stop). Graceful shutdown ', new Date().toISOString());
+    shutdown();
+})
+
+// shut down server
+function shutdown() {
+    server.close(function onServerClosed(err) {
+        if (err) {
+            console.error(err);
+            process.exitCode = 1;
+        }
+        process.exit();
+    })
+}
