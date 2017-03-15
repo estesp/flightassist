@@ -117,14 +117,51 @@ this additional information for the user of the application.
 
 ### Containerized application model
 
-The first common step to containerize an application is to Lift-n-Shift.  You may run the containerized **flightassist** in dev mode using the steps below:
+The first common step to containerize an existing application is to use
+a strategy termed "lift and shift." Just like how it sounds, you simply
+take the application as-is and place it inside a container image with the
+same basic application characteristics and requirements. You gain the
+ability to now use it in various more complex deployment flows that use
+container images, but other than that you've left the application unchanged.
 
-* Build the docker image:  `docker build -t flightassist .`
-* When running in dev mode, source the dot-env and run `docker run -p 3000:3000 -e DEVMODE=$DEVMODE -e DEV_URL=$DEV_URL -e FLIGHTSTATS_APP_ID=$FLIGHTSTATS_APP_ID -e FLIGHTSTATS_APP_KEY=$FLIGHTSTATS_APP_KEY -e TRIPIT_API_KEY=$TRIPIT_API_KEY -e TRIPIT_API_SECRET=$TRIPIT_API_SECRET -e CLOUDANT_URL=$CLOUDANT_URL -e WEATHER_URL=$WEATHER_URL -e FORCE_FLIGHT_VIEW=$FORCE_FLIGHT_VIEW flightassist`
+For **flightassist**, you can run the containerized version in a local
+environment (assuming you have the docker client installed and configured)
+by using the `localctr` Makefile target.
 
-As a further step, most likely we will take something like the weather
-service and expose it as a separate containerized microservice used
-by the main application.
+> **Note**: Because you don't have a cloud foundry instance handling environment
+> configuration, similar to running on your local system in development mode
+> you will need to copy the `dot-env` file to `.env` and insert all required
+> API keys and secrets/configuration parameters in this local file. This
+> `.env` file is ignored by `git` in this repo configuration and therefore
+> saves you the embarrassment of checking in a set of secrets/credentials.
+
+A `Makefile` has been created for automating simple `docker build` and `docker run`
+steps on your local system. Simply use `make localctr` to build and run
+the image from your local clone of this repo after creating the `.env` file
+and populating it with the required information.
+
+Alternatively, if your local shell is set up and authenticated to the IBM
+Bluemix container service, you can use the `make bxdeploy`. You must have the
+local shell configured with `DOCKER_HOST` for this to use the IBM container
+service as the target Docker engine.
+
+#### Microservices
+
+Given this "lift and shift" model is just a stepping stone to more adantageous
+use of containerized architectures, we've taken the weather endpoint from
+the Node.js application and created a separate containerized microservice for
+retrieving weather data. Because containers and microservices decouple our
+application components, you'll notice that our weather microservice does not
+need to be written in Node.js nor does it use any of the same dependencies of
+our monolithic application. In this case, we've used Python as a simple language
+in which to write the weather data retrieval service.
+
+You can find the code for our weather microservice
+in the [flightassist-weather](https://github.com/estesp/flightassist-weather) Github repository.
+
+Of course, the fact that we can develop these microservices in a parallel but
+separate space means we can improve the weather service or refactor it, or 
+change its backend data source without impacting development of the main application.
 
 ### FaaS application model
 
