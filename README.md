@@ -49,16 +49,23 @@ in your application runtime configuration in the Bluemix console:
  - `TRIPIT_API_KEY` : API key assigned by TripIt
  - `TRIPIT_API_SECRET` : API secret assigned by TripIt
 
-With these variables and service bindings you should be able to run
+With these variables plus the two service bindings you should be able to run
 the **flightassist** application successfully as a Cloud Foundry
 hosted application.
 
 For development/test purposes you may wish to use the `dot-env` file
 provided in the root of the repository to configure several
 additional variables to be able to run **flightassist** as a local
-standalone Node.js application. Once you have set up the values
-required in `dot-env` you can simply source it into your environment
-and start the application with `node ./flightassist.js`.
+standalone Node.js application.
+
+The easiest way to run locally is to copy the `dot-env` file to a file
+named `.env`, populate it with the required parameters and credentials
+and then use the included `Makefile` to build the `localdeploy` target.
+
+This will validate your npm cache in `node_modules`, source the `.env`
+file, and then run `node ./flightassist.js` on your behalf. This will,
+of course, require a valid Node.js installation already included in your
+`$PATH`.
 
 ## Application design/layout
 
@@ -141,9 +148,15 @@ the image from your local clone of this repo after creating the `.env` file
 and populating it with the required information.
 
 Alternatively, if your local shell is set up and authenticated to the IBM
-Bluemix container service, you can use the `make bxdeploy`. You must have the
+Bluemix container service, you can use the `make bxdeploy` target. You must have the
 local shell configured with `DOCKER_HOST` for this to use the IBM container
-service as the target Docker engine.
+service as the target Docker engine. See this [documentation on the client
+configuration](https://console.ng.bluemix.net/docs/containers/container_cli_cfic_install.html) in Bluemix to configure these variables. If the `cf ic` tools are already installed and your command
+line is already set up/logged in you can use `cf ic init` to display
+the three environment variables you need to export to use your `docker` client
+targeting the IBM container service. To simplify your workflow, you may add
+these variables to the `.env` file and then the `Makefile` targets interacting
+with the Bluemix container service will work without any extra configuration.
 
 #### Microservices
 
