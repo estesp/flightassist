@@ -60,21 +60,56 @@ module.exports = {
                 rejectUnauthorized: false
             };
 
-            //send the request to the Weather API
-            restcall.get(options, true, function(newData) {
-                // cache this data in cloudant with the current epoch ms
-                var currentEpochms = Date.now();
-                newData.cachetime = currentEpochms;
-                if (!isEmpty(data)) {
-                    //set the rev ID so cache update works
-                    newData._rev = data._rev;
-                }
-                newData._id = req.query.locID;
-                cacheWeatherData(newData);
-                // send data as response:
-                console.log("sending JSON weather response for " + req.query.locID);
-                resp.send(newData);
-            });
+            if (process.env.USE_WEATHER_SERVICE === "true") {
+              console.log("use weather service: " + process.env.USE_WEATHER_SERVICE);
+              // overwrite host, endpoint to point to our weather microservice
+              if (process.env.DEVMODE === "true") {
+                host = "localhost";
+              } else {
+                host = "weather-service"
+              }
+              endpoint = "/weather/" + req.query.lat + "/" + req.query.lon;
+
+              options = {
+                  host: host,
+                  path: endpoint,
+                  method: "GET",
+                  rejectUnauthorized: false
+              };
+
+              //send the request to the Weather API
+              restcall.get(options, false, function(newData) {
+                  // cache this data in cloudant with the current epoch ms
+                  var currentEpochms = Date.now();
+                  newData.cachetime = currentEpochms;
+                  if (!isEmpty(data)) {
+                      //set the rev ID so cache update works
+                      newData._rev = data._rev;
+                  }
+                  newData._id = req.query.locID;
+                  cacheWeatherData(newData);
+                  // send data as response:
+                  console.log("sending JSON weather response for " + req.query.locID);
+                  resp.send(newData);
+              });
+            } else {
+              //send the request to the Weather API
+              restcall.get(options, true, function(newData) {
+                  // cache this data in cloudant with the current epoch ms
+                  var currentEpochms = Date.now();
+                  newData.cachetime = currentEpochms;
+                  if (!isEmpty(data)) {
+                      //set the rev ID so cache update works
+                      newData._rev = data._rev;
+                  }
+                  newData._id = req.query.locID;
+                  cacheWeatherData(newData);
+                  // send data as response:
+                  console.log("sending JSON weather response for " + req.query.locID);
+                  resp.send(newData);
+              });
+            }
+
         });
     }
 };
