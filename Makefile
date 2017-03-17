@@ -1,7 +1,7 @@
 # Simple Makefile to perform simple build/deploy steps for
 # the Flightassist demo application code
 
-.PHONY: localdeploy localctr cfdeploy bxdeploy localimage bximage swarmdeploy clean npm npmupdate
+.PHONY: localdeploy localctr cfdeploy bxdeploy localimage bximage swarmdeploy clean npm npmupdate swarmdeploy swarmsecrets
 
 BMIX_REGISTRY=registry.ng.bluemix.net
 BMIX_NAMESPACE=$(shell cf ic namespace get)
@@ -47,3 +47,11 @@ bxdeploy: bximage
 		-e TRIPIT_API_SECRET=$(TRIPIT_API_SECRET) -e CLOUDANT_URL=$(CLOUDANT_URL) -e WEATHER_URL=$(WEATHER_URL) \
 		-e FORCE_FLIGHT_VIEW=$(FORCE_FLIGHT_VIEW) \
 		$(BMIX_REGISTRY)/$(BMIX_NAMESPACE)/flightassist:latest
+
+# note that the compose yaml also expects the weather service image to be available as well
+# which is hosted in a separate project: github.com/estesp/flightassist-weather
+swarmdeploy: localimage swarmsecrets
+	docker stack deploy -c docker-compose.yaml flightassist
+
+swarmsecrets: create-swarm-secrets.sh
+	./create-swarm-secrets.sh
