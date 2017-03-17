@@ -1,12 +1,25 @@
 /* Retrieve data from FlightStats API */
-
 var FlightStatsAPI = require("flightstats");
 var Cloudant = require('cloudant');
+
+var flightStatsAppId = "";
+var flightStatsAppKey = "";
+if (process.env.DEPLOY === "swarm") {
+    flightStatsAppId = global.flightstats_app_id;
+    flightStatsAppKey = global.flightstats_app_key;
+} else {
+    flightStatsAppId = process.env.FLIGHTSTATS_APP_ID;
+    flightStatsAppKey = process.env.FLIGHTSTATS_APP_KEY;
+}
 
 // cloudant credentials URL
 var cURL = "";
 if (process.env.DEVMODE === "true") {
-    cURL = process.env.CLOUDANT_URL;
+    if (process.env.DEPLOY === "swarm") {
+        cURL = global.cloudant_url;
+    } else {
+        cURL = process.env.CLOUDANT_URL;
+    }
 } else {
     var vcap_services = JSON.parse(process.env.VCAP_SERVICES);
     cURL = vcap_services.cloudantNoSQLDB[0].credentials.url;
@@ -14,8 +27,8 @@ if (process.env.DEVMODE === "true") {
 
 var cloudant = Cloudant({ url: cURL, plugin: 'promises' });
 var flightstats = new FlightStatsAPI({
-    appId: process.env.FLIGHTSTATS_APP_ID,
-    apiKey: process.env.FLIGHTSTATS_APP_KEY
+    appId: flightStatsAppId,
+    apiKey: flightStatsAppKey
 });
 
 module.exports = {
