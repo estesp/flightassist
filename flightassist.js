@@ -5,13 +5,11 @@
  */
 var express = require('express'),
     routes = require('./routes'),
-    tripdata = require('./routes/tripdata.js'),
     session = require("express-session"),
     http = require('http'),
     path = require('path'),
-    tripit = require('./tripit.js'),
-    flightstats = require('./flightstats.js'),
-    weather = require('./weather.js');
+    fs = require('fs');
+
 var app = express();
 
 // if deploying to a different route, update this variable:
@@ -20,6 +18,20 @@ if (process.env.DEVMODE === "true") {
     baseURL = process.env.DEV_URL;
 }
 
+if (process.env.DEPLOY === "swarm") {
+    // credentials are stored in secrets files instead of
+    // environment variables; read each one and load them
+    // into our application environment
+    var basePath = "/run/secrets/";
+    var list = ["flightstats_app_key", "weather_url", "tripit_api_secret", "tripit_api_key",
+        "flightstats_app_id", "cloudant_url"
+    ];
+    for (var i = 0; i < list.length; i++) {
+        var contents = fs.readFileSync(basePath + list[i], "utf8");
+        contents = contents.replace(/[\n\r]/g, ''); //remove trailing newline
+        global[list[i]] = contents;
+    }
+}
 // all environments
 app.set('port', process.env.PORT || 3000);
 app.set('views', __dirname + '/views');
@@ -32,6 +44,11 @@ app.get('/', routes.index);
 app.get("/authorize", function(req, res) {
     tripit.authorize(baseURL + "flights", req.query.mobile, res);
 });
+
+var tripdata = require('./routes/tripdata.js'),
+    tripit = require('./tripit.js'),
+    flightstats = require('./flightstats.js'),
+    weather = require('./weather.js');
 
 app.get("/flights", function(req, res) {
     var respData = {};
@@ -108,7 +125,7 @@ process.on('SIGINT', function onSigint() {
 process.on('SIGTERM', function onSigterm() {
     console.info('Got SIGTERM (docker container stop). Graceful shutdown ', new Date().toISOString());
     shutdown();
-})
+});
 
 // shut down server
 function shutdown() {
@@ -118,5 +135,5 @@ function shutdown() {
             process.exitCode = 1;
         }
         process.exit();
-    })
+    });
 }

@@ -2,12 +2,27 @@
 
 var TripItApiClient = require("tripit-node"),
     Cloudant = require('cloudant');
-var client = new TripItApiClient(process.env.TRIPIT_API_KEY, process.env.TRIPIT_API_SECRET);
+
+var tripItKey = "";
+var tripItSecret = "";
+
+if (process.env.DEPLOY === "swarm") {
+    tripItKey = global.tripit_api_key;
+    tripItSecret = global.tripit_api_secret;
+} else {
+    tripItKey = process.env.TRIPIT_API_KEY;
+    tripItSecret = process.env.TRIPIT_API_SECRET;
+}
+var client = new TripItApiClient(tripItKey, tripItSecret);
 
 // cloudant credentials URL
 var cURL = "";
 if (process.env.DEVMODE === "true") {
-    cURL = process.env.CLOUDANT_URL;
+    if (process.env.DEPLOY === "swarm") {
+        cURL = global.cloudant_url;
+    } else {
+        cURL = process.env.CLOUDANT_URL;
+    }
 } else {
     var vcap_services = JSON.parse(process.env.VCAP_SERVICES);
     cURL = vcap_services.cloudantNoSQLDB[0].credentials.url;
