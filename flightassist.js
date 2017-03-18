@@ -31,6 +31,19 @@ if (process.env.DEPLOY === "swarm") {
         contents = contents.replace(/[\n\r]/g, ''); //remove trailing newline
         global[list[i]] = contents;
     }
+} else if (process.env.DEPLOY === "kubernetes") {
+    console.log("kubernetes deploy mode is detected")
+    var basePath="/run/secrets/"
+    var list = ["flightstats-app-id", "flightstats-app-key",
+        "tripit-api-key", "tripit-api-secret"
+    ];
+    for (var i = 0; i < list.length; i++) {
+        var contents = fs.readFileSync(basePath + list[i], "base64");
+        contents = contents.replace(/[\n\r]/g, ''); //remove trailing newline
+        var key = list[i].replace(/[-]/g, '_'); // replace - with _ as - is not allowed in var name
+        global[key] = contents;
+    }
+    baseURL = process.env.BASE_URL
 }
 // all environments
 app.set('port', process.env.PORT || 3000);

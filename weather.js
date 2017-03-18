@@ -1,6 +1,7 @@
 // retrieve and cache weather data
 
-var Cloudant = require('cloudant');
+var Cloudant = require('cloudant'),
+    fs = require('fs');
 
 // cloudant & weather co. credentials URL
 var cURL = "";
@@ -13,6 +14,10 @@ if (process.env.DEVMODE === "true") {
         cURL = process.env.CLOUDANT_URL;
         weatherURL = process.env.WEATHER_URL;
     }
+} else if (process.env.DEPLOY === "kubernetes"){
+    console.log("kubernetes deploy mode is detected")
+    var binding = JSON.parse(fs.readFileSync('/opt/service-bind/binding', 'utf8'));
+    cURL = binding.url
 } else {
     var vcap_services = JSON.parse(process.env.VCAP_SERVICES);
     cURL = vcap_services.cloudantNoSQLDB[0].credentials.url;
@@ -50,22 +55,40 @@ module.exports = {
             }
             var restcall = require('./restcall.js');
             var url = require('url');
+            var host = "";
+            var endpoint = "";
 
-            var wURLObj = url.parse(weatherURL);
-            var host = wURLObj.host;
-            var authStr = wURLObj.auth;
-            //build up weather 3day query (GET /v1/geocode/{latitude}/{longitude}/forecast/daily/3day.json)
-            var endpoint = "/api/weather/v1/geocode/" + req.query.lat + "/" + req.query.lon + "/forecast/daily/3day.json";
+            if (process.env.USE_WEATHER_SERVICE === "false") {
+                var wURLObj = url.parse(weatherURL);
+                host = wURLObj.host;
+                var authStr = wURLObj.auth;
+                //build up weather 3day query (GET /v1/geocode/{latitude}/{longitude}/forecast/daily/3day.json)
+                var endpoint = "/api/weather/v1/geocode/" + req.query.lat + "/" + req.query.lon + "/forecast/daily/3day.json";
 
-            var options = {
-                host: host,
-                path: endpoint,
-                method: "GET",
-                auth: authStr,
-                rejectUnauthorized: false
-            };
+                var options = {
+                    host: host,
+                    path: endpoint,
+                    method: "GET",
+                    auth: authStr,
+                    rejectUnauthorized: false
+                };
 
-            if (process.env.USE_WEATHER_SERVICE === "true") {
+                //send the request to the Weather API
+                restcall.get(options, true, function(newData) {
+                    // cache this data in cloudant with the current epoch ms
+                    var currentEpochms = Date.now();
+                    newData.cachetime = currentEpochms;
+                    if (!isEmpty(data)) {
+                        //set the rev ID so cache update works
+                        newData._rev = data._rev;
+                    }
+                    newData._id = req.query.locID;
+                    cacheWeatherData(newData);
+                    // send data as response:
+                    console.log("sending JSON weather response for " + req.query.locID);
+                    resp.send(newData);
+                });
+            } else {
                 console.log("use weather service: " + process.env.USE_WEATHER_SERVICE);
                 // overwrite host, endpoint to point to our weather microservice
                 if (process.env.DEVMODE === "true" && process.env.DEPLOY !== "swarm") {
@@ -98,24 +121,7 @@ module.exports = {
                     console.log("sending JSON weather response for " + req.query.locID);
                     resp.send(newData);
                 });
-            } else {
-                //send the request to the Weather API
-                restcall.get(options, true, function(newData) {
-                    // cache this data in cloudant with the current epoch ms
-                    var currentEpochms = Date.now();
-                    newData.cachetime = currentEpochms;
-                    if (!isEmpty(data)) {
-                        //set the rev ID so cache update works
-                        newData._rev = data._rev;
-                    }
-                    newData._id = req.query.locID;
-                    cacheWeatherData(newData);
-                    // send data as response:
-                    console.log("sending JSON weather response for " + req.query.locID);
-                    resp.send(newData);
-                });
             }
-
         });
     }
 };

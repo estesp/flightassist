@@ -1,10 +1,11 @@
 /* Retrieve data from FlightStats API */
-var FlightStatsAPI = require("flightstats");
-var Cloudant = require('cloudant');
+var FlightStatsAPI = require("flightstats"),
+    Cloudant = require('cloudant'),
+    fs = require('fs');
 
 var flightStatsAppId = "";
 var flightStatsAppKey = "";
-if (process.env.DEPLOY === "swarm") {
+if (process.env.DEPLOY === "swarm" || process.env.DEPLOY === "kubernetes") {
     flightStatsAppId = global.flightstats_app_id;
     flightStatsAppKey = global.flightstats_app_key;
 } else {
@@ -20,6 +21,10 @@ if (process.env.DEVMODE === "true") {
     } else {
         cURL = process.env.CLOUDANT_URL;
     }
+} else if (process.env.DEPLOY === "kubernetes") {
+    console.log("kubernetes deploy mode is detected")
+    var binding = JSON.parse(fs.readFileSync('/opt/service-bind/binding', 'utf8'));
+    cURL = binding.url
 } else {
     var vcap_services = JSON.parse(process.env.VCAP_SERVICES);
     cURL = vcap_services.cloudantNoSQLDB[0].credentials.url;

@@ -1,12 +1,13 @@
 /* Retrieve trip information */
 
 var TripItApiClient = require("tripit-node"),
-    Cloudant = require('cloudant');
+    Cloudant = require('cloudant'),
+    fs = require('fs');
 
 var tripItKey = "";
 var tripItSecret = "";
 
-if (process.env.DEPLOY === "swarm") {
+if (process.env.DEPLOY === "swarm" || process.env.DEPLOY === "kubernetes") {
     tripItKey = global.tripit_api_key;
     tripItSecret = global.tripit_api_secret;
 } else {
@@ -23,6 +24,10 @@ if (process.env.DEVMODE === "true") {
     } else {
         cURL = process.env.CLOUDANT_URL;
     }
+} else if (process.env.DEPLOY === "kubernetes") {
+    console.log("kubernetes deploy mode is detected")
+    var binding = JSON.parse(fs.readFileSync('/opt/service-bind/binding', 'utf8'));
+    cURL = binding.url
 } else {
     var vcap_services = JSON.parse(process.env.VCAP_SERVICES);
     cURL = vcap_services.cloudantNoSQLDB[0].credentials.url;
