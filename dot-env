@@ -19,6 +19,13 @@ export WEATHER_URL=<insert Weather company URL from Bluemix credentials view>
 # they aren't within the next 24 hour window; use this variable set to "true"
 # to force the UI to do so:
 # export FORCE_FLIGHT_VIEW=true
-export FORCE_FLIGHT_VIEW=true
 
+# For deploying with Swarm or Kubernetes using secrets support, you can
+# export the following variable set to the appropriate orchestration engine.
+# Usually this will be done via a yaml file (see docker-compose.yaml as an
+# example) but could be done using command line tools like `docker service create`
+# export DEPLOY=swarm|kubernetes
+
+# To use the externalized/containerized weather microservice, export this variable
+# set to "true"
 export USE_WEATHER_SERVICE=true
