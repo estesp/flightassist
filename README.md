@@ -335,5 +335,26 @@ Concrete instructions for making a local deployment with **minikube** is coming 
 ### Docker + Kubernetes based application deployment (IBM Container Service beta)
 
 The *yaml* files exist in the repository for creating a Kubernetes deployment
-with the weather microservice and the main application. A specific guide for
-using this with the new IBM Container Service beta is coming soon.
+with the weather microservice and the main application. 
+
+1. Follow the create kubernetes cluster tutorial to create the kubernetes cluster in IBM Container service [https://console.ng.bluemix.net/docs/containers/cs_tutorials.html#cs_tutorials].
+
+2. Create the cloudant and weather insight service if you don't have them deployed yet:
+  * ```bx service create cloudantNoSQLDB Lite mycloudant```
+  * ``` bx service create weatherinsights Free-v2 myweatherinsights```
+
+3. Bind the two services to the kubernete cluster deployed earlier:
+  * ```bx cs cluster-service-bind lincluster default mycloudant```
+  * ```bx cs cluster-service-bind lincluster default myweatherinsights```
+
+  The example uses the default kubernetes namespace and you could choose a different namespace.
+
+4. Modify the secret.yaml file with flightstats-app-id, flightstats-app-key, tripit-api-key, and tripit-api-secret.
+
+5. Edit the flightassist.yaml and replace the ```<namespace>``` with your own namespace.
+
+5. Deploy the secret and deployment:
+  * ```kubectl create -f secret.yaml```
+  * ```kubectl create -f flightassist.yaml```
+
+
