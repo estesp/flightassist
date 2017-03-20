@@ -143,11 +143,5 @@ process.on('SIGTERM', function onSigterm() {
 
 // shut down server
 function shutdown() {
-    server.close(function onServerClosed(err) {
-        if (err) {
-            console.error(err);
-            process.exitCode = 1;
-        }
-        process.exit();
-    });
+    process.exit();
 }

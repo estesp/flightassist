@@ -29,3 +29,11 @@ export WEATHER_URL=<insert Weather company URL from Bluemix credentials view>
 # To use the externalized/containerized weather microservice, export this variable
 # set to "true"
 export USE_WEATHER_SERVICE=true
+
+# To use an OpenWhisk function-as-a-service implementation for retrieving the
+# forecast, export the following variable as true
+# export USE_WEATHER_SERVERLESS=true
+# You will also require your OpenWhisk credentials which you can retrieve
+# from the `wsk` command line client like this: 
+# $ wsk property get --auth | awk  '{print $3}'
+export OPENWHISK_AUTH=<insert openwhisk auth credentials>
