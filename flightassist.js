@@ -22,6 +22,7 @@ if (process.env.DEPLOY === "swarm") {
     // credentials are stored in secrets files instead of
     // environment variables; read each one and load them
     // into our application environment
+    console.log("Swarm deploy mode is detected; collecting credentials from secrets");
     var basePath = "/run/secrets/";
     var list = ["flightstats_app_key", "weather_url", "tripit_api_secret", "tripit_api_key",
         "flightstats_app_id", "cloudant_url"
@@ -32,8 +33,8 @@ if (process.env.DEPLOY === "swarm") {
         global[list[i]] = contents;
     }
 } else if (process.env.DEPLOY === "kubernetes") {
-    console.log("kubernetes deploy mode is detected")
-    var basePath="/run/secrets/"
+    console.log("Kubernetes deploy mode is detected; collecting credentials from secrets");
+    var basePath = "/run/secrets/";
     var list = ["flightstats-app-id", "flightstats-app-key",
         "tripit-api-key", "tripit-api-secret"
     ];
@@ -43,7 +44,7 @@ if (process.env.DEPLOY === "swarm") {
         var key = list[i].replace(/[-]/g, '_'); // replace - with _ as - is not allowed in var name
         global[key] = contents;
     }
-    baseURL = process.env.BASE_URL
+    baseURL = process.env.BASE_URL;
 }
 // all environments
 app.set('port', process.env.PORT || 3000);

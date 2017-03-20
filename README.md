@@ -25,14 +25,6 @@ The [Weather Company weather data](https://console.ng.bluemix.net/catalog/servic
 variants of both of these services and connect them to your Bluemix
 hosted CF application.
 
-An additional getting started requirement is to create the databases used
-in the code in your newly created Cloudant instance. One simple way
-to do this is through the Bluemix console UI. Go to your Cloudant
-service and open the Cloudant UI console using the link from your
-service instance page. Once at the Cloudant console you will need to
-create the **trips**, **weather**, and **connections** databases for
-the cacheing code to work properly.
-
 The two non-Bluemix services used are API credentials for [TripIt](https://www.tripit.com/developer) and
 [FlightStats](https://developer.flightstats.com/api-docs/).
 
@@ -40,32 +32,9 @@ The two non-Bluemix services used are API credentials for [TripIt](https://www.t
 > which is only available under a 30-day trial license key, or under
 > a commercial premium account with FlightStats.
 
-To configure the non-Bluemix hosted services with your CF-hosted
-application you will need to create the following environment variables
-in your application runtime configuration in the Bluemix console:
-
- - `FLIGHTSTATS_APP_ID` : application ID assigned by FlightStats
- - `FLIGHTSTATS_APP_KEY` : application key assigned by FlightStats
- - `TRIPIT_API_KEY` : API key assigned by TripIt
- - `TRIPIT_API_SECRET` : API secret assigned by TripIt
-
-With these variables plus the two service bindings you should be able to run
-the **flightassist** application successfully as a Cloud Foundry
-hosted application.
-
-For development/test purposes you may wish to use the `dot-env` file
-provided in the root of the repository to configure several
-additional variables to be able to run **flightassist** as a local
-standalone Node.js application.
-
-The easiest way to run locally is to copy the `dot-env` file to a file
-named `.env`, populate it with the required parameters and credentials
-and then use the included `Makefile` to build the `localdeploy` target.
-
-This will validate your npm cache in `node_modules`, source the `.env`
-file, and then run `node ./flightassist.js` on your behalf. This will,
-of course, require a valid Node.js installation already included in your
-`$PATH`.
+For detailed deployment guides for the various application models
+supported in the **flightassist** code and configuration, see the
+[Deployment Guides section](#deployguides) below.
 
 ## Application design/layout
 
@@ -183,3 +152,209 @@ is still under discussion. Most likely we can have serverless
 functions backed by Cloudant for the simple data queries to weather
 and flight information. This document will be updated as these
 design decisions are implemented.
+
+## <a name="deployguides"></a>Deployment Guides
+
+The following sections provide specific step-by-step guides for deploying
+**flightassist** using the various models described to this point.
+
+### External service pre-requisites
+
+All deployment methods require credentials for a set of services used
+by the application.  Without these service configurations and their
+credentials the application will not work properly.
+
+The first two services are part of IBM's Bluemix cloud service catalog. To
+create instances of these services for free, you can create a 30-day trial
+account at this [Bluemix sign-up page](https://console.ng.bluemix.net/registration/).
+
+Once you have a Bluemix account, you can create "Free tier" instances of
+both a Cloudant NoSQL database and the Weather Insights API. For simplicity,
+links to these services are below:
+
+ * [The Cloudant NoSQL database service](https://console.ng.bluemix.net/catalog/services/cloudant-nosql-db?env_id=ibm:yp:us-south)
+ * [Weather Company Data, also known as Weather Insights](https://console.ng.bluemix.net/catalog/services/weather-company-data?env_id=ibm:yp:us-south)
+
+> **Note:** Cloud Foundry power users will know that you can create service
+> instances via the `cf` command line tool.
+
+Once you have created free tier instances of these services, you can view
+your credentials and, for each, copy the *url* variant of the credential info
+in the next steps when asked for the `WEATHER_URL` or `CLOUDANT_URL`.
+
+Before moving on, the demo application is missing code to create the databases used
+to cache API responses in your newly created Cloudant instance. One simple way
+to make sure these databases are initialized is through the Bluemix console UI.
+Go to your new Cloudant service and open the Cloudant UI console using the link from your
+service instance page. Once at the Cloudant console you will need to
+create the **trips**, **weather**, and **connections** databases for
+the cacheing code to work properly.
+
+Note that if you deploy the application to Cloud Foundry in IBM Bluemix,
+you will also create CF service bindings between your service instances
+and the application you deploy, relieving you of the need to set up 
+environmental parameters with the credential details. Information on that
+step is below in the Cloud Foundry section.
+
+With your two IBM Bluemix services instantiated with credentials assigned, you
+will also be required to create a developer account for both the TripIt API and
+the FlightStats API. The following links will take you to the appropriate signup
+pages for these two developer APIs.
+
+ * [TripIt Developer API](https://www.tripit.com/developer/create)
+ * [FlightStats Developer API](https://developer.flightstats.com/signup)
+
+When signing up for a FlightStats developer key, note that there is a
+review process that may take 24 hours or more to get your application
+credentials activated for a 30-day trial with the API.
+
+Once you have valid credentials to all four services, you can use any of the
+following application deployment models to use and demonstrate the application
+behavior.
+
+### Standalone Node.js monolithic application
+
+To run **flightassist** as a standalone Node.js application, the system
+on which you want to run the application requires an installation of Node.js/npm
+utilities and optionally `make` (to utilize the `Makefile` targets set up
+for ease of deployment configuration).
+
+ 1. Clone this repository: `git clone https://github.com/estesp/flightassist`
+ 2. Copy `dot-env` to `.env`: `cd flightassist && cp dot-env .env`
+ 3. Edit `.env` and fill in all required credentials from your four services
+ 4. Leave `DEVMODE` and `DEV_URL` as set as this will allow the local deployment
+ 5. Read about the rest of the variables; make sure `USE_WEATHER_SERVICE=false`
+ 6. If using the `Makefile` type `make localdeploy` to run npm and start the Node application.
+
+If you performed the setup steps correctly, you now have a working application which
+you can visit locally via http://localhost:3000 in your browser.
+
+### Cloud Foundry monolithic application hosted in IBM Bluemix
+
+Pushing the Node.js application to Bluemix as a CF application is quite similar
+to running the Node.js application locally. The main steps to perform are in the
+Bluemix console for binding the Bluemix catalog service instances to your application
+and setting up the external API credentials as environment variables.
+
+Because we already have a `manifest.yml` in the root of the project, you can
+get started by simply using `cf push` from the root of the repository:
+
+ 1. Clone the project: `git clone https://github.com/estesp/flightassist`
+ 2. Edit `manifest.yml` and select your own application name and `host`. Since my application instance already owns the route `flightassist` on `mybluemix.net` you will have to select a unique name.
+ 3. Edit `flightassist.js` to set the `baseURL` variable (around line 16) to your selected CF route hostname.
+ 4. Either type `cf push` after making these edits or `make cfdeploy` to do the same action.
+ 5. Once your application is deployed, you need to make service bindings; go to the Bluemix console, open your application and use the UI to bind your two Bluemix services (Cloudant and Weather Data) to your application.
+ 6. Go to the *Runtime* settings for your application and add these four environment variables to set up external credentials to the TripIt and FlightStats services:
+   - `FLIGHTSTATS_APP_ID` : application ID assigned by FlightStats
+   - `FLIGHTSTATS_APP_KEY` : application key assigned by FlightStats
+   - `TRIPIT_API_KEY` : API key assigned by TripIt
+   - `TRIPIT_API_SECRET` : API secret assigned by TripIt
+
+Your application should restart automatically, but can be done manually as well
+in the UI. With the service bindings and added environment variables, the
+application should be operational at the hostname route you selected for your CF
+application. Note that the `FORCE_FLIGHT_VIEW` variable can optionally be set to `true`
+as an added environment variable for demonstrating the application function even
+if no flights are upcoming in the next day with the TripIt user credentials
+authorized via the application.
+
+### Local Docker container deployment as a monolithic application
+
+To deploy the application wholesale in a Docker container, the project
+already includes a simple "lift and shift" `Dockerfile` that 
+packages the application very similar to the standalone model already
+discussed. The only benefit is that the image can be reused and doesn't
+force the local system to have any of the Node.js SDK dependencies
+installed.
+
+ 1. Clone the project: `git clone https://github.com/estesp/flightassist`
+ 2. Copy `dot-env` to `.env`: `cd flightassist && cp dot-env .env`
+ 3. Edit `.env` and fill in all required credentials from your four services
+ 4. Leave `DEVMODE` and `DEV_URL` as set as this will allow the local deployment
+ 5. Read about the rest of the variables; make sure `USE_WEATHER_SERVICE=false`
+ 6. Use the `Makefile` to perform the `docker build` and `docker run`: `make localctr`
+ 7. Note you can also build/rebuild the container image using the `Makefile`: `make localimage`
+
+Very similar to the standalone non-containerized application version,
+you can visit http://localhost:3000 and use the application as this
+port is exposed from the running container.
+
+### IBM Container Service (legacy) deployment as a monolithic application
+
+You can also use the legacy IBM Container Service capability to point your
+`docker` client at the hosted public container service API endpoint and
+registry and deploy the same single container runtime, and have public IP
+address assignment, simple container group (scaling) capability, and image vulnerability
+scanning.  The steps are the same as running Docker locally with the following
+changes:
+
+ 1. Make sure you are logged in with the `cf ic login` command (Requires the IBM Container Service plugin)
+ 2. Get the required settings for the `DOCKER_HOST` and other variables (re-run `cf ic init` to have them displayed in your terminal) and place them in the appropriate locations in your `.env` file.
+ 3. Assuming you have your environment configured properly, you can now type `make bxdeploy` to build your container image, tag and push it to the IBM private registry and then run it in the IBM container service.
+
+Now that IBM Bluemix has released the Kubernetes-based cluster capability for the
+IBM Container Service in beta, see the Kubenetes deployment section below
+for a more up-to-date method for deployment the microservice-based variant of
+**flightassist** in this new Bluemix beta service.
+
+### Docker Swarm-based micro-service based application deployment
+
+With the advent of Docker Swarm in Docker 1.12 and above, you can use a
+recent installation of the Docker engine with Swarm enabled (`docker swarm init`)
+and the new Docker Compose v3.1 format to deploy **flightassist** as
+a containerized micro-service-using application onto a Swarm cluster.
+
+This deployment will use the new `docker secret` and `docker stack deploy`
+capabilities of Docker 1.13.1 and above, so the minimum required Docker
+version is 1.13.1. Docker for Mac updated to the most recent edition is
+a great way to try this out.
+
+ 1. Clone the project: `git clone https://github.com/estesp/flightassist`
+ 2. Copy `dot-env` to `.env`: `cd flightassist && cp dot-env .env`
+ 3. Edit `.env` and fill in all required credentials from your four services
+ 4. Uncomment `DEPLOY` and set the value to `swarm`
+ 5. Make sure `export USE_WEATHER_SERVICE=true` is uncommented
+ 6. Clone the weather microservice project: `git clone https://github.com/estesp/flightassist-weather`
+ 7. Enter that project directory and type: `make localimage` to get the image built (depended on by the compose service definition)
+ 8. Go back to the root of the `flightassist` repo and type `make swarmdeploy`. This will first create the secrets using the values you have placed in `.env` using the `docker secret create` command and then use the `docker stack deploy` command to bring up your two services in the Swarm.
+
+The application should be available now on http://localhost, assuming you are using a local
+Docker edition (like Docker for Mac) or a locally installed Docker
+daemon on a Linux system. If the application is hosted on a known IP or host, you can
+modify the `docker-compose.yaml` file with those details and access the application
+on that host/IP information. All the standard Swarm tools can be used to view logs
+or validate that the services are up and running properly.
+
+### Docker + Kubernetes based application deployment (minikube)
+
+The *yaml* files for a Kubernetes deployment of the weather microservice and
+the main application have been created in the base repository and tested.
+
+Concrete instructions for making a local deployment with **minikube** is coming soon.
+
+### Docker + Kubernetes based application deployment (IBM Container Service beta)
+
+The *yaml* files exist in the repository for creating a Kubernetes deployment
+with the weather microservice and the main application. 
+
+1. Follow the create kubernetes cluster tutorial to create the kubernetes cluster in IBM Container service [https://console.ng.bluemix.net/docs/containers/cs_tutorials.html#cs_tutorials].
+
+2. Create the cloudant and weather insight service if you don't have them deployed yet:
+  * ```bx service create cloudantNoSQLDB Lite mycloudant```
+  * ``` bx service create weatherinsights Free-v2 myweatherinsights```
+
+3. Bind the two services to the kubernete cluster deployed earlier:
+  * ```bx cs cluster-service-bind lincluster default mycloudant```
+  * ```bx cs cluster-service-bind lincluster default myweatherinsights```
+
+  The example uses the default kubernetes namespace and you could choose a different namespace.
+
+4. Modify the secret.yaml file with flightstats-app-id, flightstats-app-key, tripit-api-key, and tripit-api-secret.
+
+5. Edit the flightassist.yaml and replace the ```<namespace>``` with your own namespace.
+
+5. Deploy the secret and deployment:
+  * ```kubectl create -f secret.yaml```
+  * ```kubectl create -f flightassist.yaml```
+
+

@@ -58,7 +58,7 @@ module.exports = {
             var host = "";
             var endpoint = "";
 
-            if (process.env.USE_WEATHER_SERVICE === "false") {
+            if (process.env.USE_WEATHER_SERVICE !== "true") {
                 var wURLObj = url.parse(weatherURL);
                 host = wURLObj.host;
                 var authStr = wURLObj.auth;
