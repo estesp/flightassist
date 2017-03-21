@@ -123,12 +123,18 @@ function findFlights(today, jsonTrip, forceFlightView) {
     // we need the air segments to be in sorted by flight start time order
     flightSegments.sort(sortFlightSegments);
 
-    var now = Date.now();
-    // force current time offset to be at the beginning flight segment
+    // force current time offset to be at the next upcoming flight segment
     // so in development mode we can test the flight view
     if (forceFlightView) {
-        today = Date.parse(makeDateTimeString(flightSegments[0].StartDateTime));
-        now = today + 1;
+        var now = Date.now();
+        // find next segment that is not in the past
+        for (var k = 0; k < flightSegments.length; k++) {
+            start = Date.parse(makeDateTimeString(flightSegments[k].StartDateTime));
+            if (start >= now) {
+                today = start;
+                break;
+            }
+        }
     }
     var upcomingFlights = [];
     var lastFlightEnd = 0;
@@ -136,7 +142,7 @@ function findFlights(today, jsonTrip, forceFlightView) {
     var currentTerminus = "";
     for (var i = 0; i < flightSegments.length; i++) {
         var flightStartDate = Date.parse(makeDateTimeString(flightSegments[i].StartDateTime));
-        if (isSoonOrWithin(today, flightStartDate, now) && (originAirport === "")) {
+        if (inNextDay(today, flightStartDate) && (originAirport === "")) {
             // flight is coming up in next 24 hours; this is the first segment found
             upcomingFlights = [flightSegments[i]];
             if (originAirport === "") {
@@ -188,6 +194,18 @@ function lessThanTwelve(flightEnd, flightStart) {
 //returns whether today is within a day of a start date or prior/equal to end
 function isSoonOrWithin(today, start, end) {
     if (((start - today) <= 24 * 60 * 60 * 1000) && ((end - today) >= 0)) {
+        return true;
+    }
+    return false;
+}
+
+function inNextDay(today, start) {
+    if ((start - today) < 0) {
+        //already in the past
+        return false;
+    }
+    // check next 24 hours
+    if ((start - today) <= 24 * 60 * 60 * 1000) {
         return true;
     }
     return false;
