@@ -63,7 +63,7 @@ spec:
           - name: USE_WEATHER_SERVICE
             value: "true"
           - name: BASE_URL
-            value: "http://lincluster.us-south.containers.mybluemix.net/"
+            value: "http://<your-app-end-point-url>/"
           - name: FORCE_FLIGHT_VIEW
             value: "true"
           volumeMounts:
