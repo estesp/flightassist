@@ -351,10 +351,10 @@ with the weather microservice and the main application.
   * ``` bx service create weatherinsights Free-v2 myweatherinsights```
 
 3. Bind the two services to the kubernete cluster deployed earlier:
-  * ```bx cs cluster-service-bind lincluster default mycloudant```
-  * ```bx cs cluster-service-bind lincluster default myweatherinsights```
+  * ```bx cs cluster-service-bind {your-cluster-name} default mycloudant```
+  * ```bx cs cluster-service-bind {your-cluster-name} default myweatherinsights```
 
-  The example uses the default kubernetes namespace and you could choose a different namespace.
+  The examples above use the default kubernetes namespace and you could choose a different namespace.
 
 4. Modify the secret.yaml file with flightstats-app-id, flightstats-app-key, tripit-api-key, and tripit-api-secret.
 
