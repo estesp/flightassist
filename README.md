@@ -147,11 +147,18 @@ change its backend data source without impacting development of the main applica
 
 ### FaaS application model
 
-The OpenWhisk-based FaaS deployment/implementation of **flightassist**
-is still under discussion. Most likely we can have serverless
-functions backed by Cloudant for the simple data queries to weather
-and flight information. This document will be updated as these
-design decisions are implemented.
+Similar to our initial baby step to break out the weather API query
+into a microservice, our FaaS model takes that same capability (our
+weather lookup) and offloads it to an OpenWhisk-based action in IBM
+Bluemix. Because the OpenWhisk system packages already include a weather
+forecast lookup using our same IBM Weather Insights API credentials, it was
+simple to call this OpenWhisk action via its default HTTP endpoint already
+available in the OpenWhisk ecosystem through this default system package.
+
+It would be interesting to continue to grow the use of FaaS in **flightassist**
+by writing new actions in OpenWhisk that handle the entire cache lookup,
+external API query (if needed), and cache update/formatted response work
+as a single callable action.
 
 ## <a name="deployguides"></a>Deployment Guides
 
@@ -344,10 +351,10 @@ with the weather microservice and the main application.
   * ``` bx service create weatherinsights Free-v2 myweatherinsights```
 
 3. Bind the two services to the kubernete cluster deployed earlier:
-  * ```bx cs cluster-service-bind lincluster default mycloudant```
-  * ```bx cs cluster-service-bind lincluster default myweatherinsights```
+  * ```bx cs cluster-service-bind {your-cluster-name} default mycloudant```
+  * ```bx cs cluster-service-bind {your-cluster-name} default myweatherinsights```
 
-  The example uses the default kubernetes namespace and you could choose a different namespace.
+  The examples above use the default kubernetes namespace and you could choose a different namespace.
 
 4. Modify the secret.yaml file with flightstats-app-id, flightstats-app-key, tripit-api-key, and tripit-api-secret.
 
@@ -356,5 +363,27 @@ with the weather microservice and the main application.
 5. Deploy the secret and deployment:
   * ```kubectl create -f secret.yaml```
   * ```kubectl create -f flightassist.yaml```
+  
+### Existing application deployment + OpenWhisk action for Weather API
 
+Instead of using the weather microservice container, the code allows us
+to utilize any of the "monolith" deployment models (standalone, hosted CF,
+or containerized), but use an OpenWhisk action to handle the weather
+forecast query. Thanks to OpenWhisk built-in system packages, which includes
+a weather API, we don't even have to write our own action to try it out with
+a simple weather forecast lookup.
 
+Use any of the above guides with the following changes to use the existing
+OpenWhisk system action to call the Weather Insights API:
+
+ 1. Edit your `.env` and unset the `USE_WEATHER_SERVICE=true` if it was set
+ (or set it to `false`)
+ 2. Uncomment the `export USE_WEATHER_SERVERLESS=true` (or add it if you don't
+ have this variable copied in from the `dot-env` template)
+ 3. Login to the IBM Bluemix console and set up the [OpenWhisk client](https://console.ng.bluemix.net/openwhisk/cli), making sure
+ to run the setup command to set the host and authentication parameters.
+ 4. Run `wsk property get --auth | awk  '{print $3}'` to get the authentication
+ string from OpenWhisk and set a new variable in `.env`: `export OPENWHISK_AUTH=<auth-string` with
+ the data you got back from the `get --auth` command.
+ 5. Run your deployment of **flightassist** and verify in your logs that the
+ OpenWhisk action is being utilized to query the weather data for each airport.
