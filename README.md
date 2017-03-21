@@ -358,7 +358,7 @@ with the weather microservice and the main application.
 
 4. Modify the secret.yaml file with flightstats-app-id, flightstats-app-key, tripit-api-key, and tripit-api-secret.
 
-5. Edit the flightassist.yaml and replace the ```<namespace>``` with your own namespace.
+5. Edit the flightassist.yaml and replace the ```<namespace>``` with your own namespace.  Also replace <your-app-end-point-url> with the endpoint of the application.  If you are using the free cluster provided by IBM Container service, this is your node ip and nodeport, e.g. 169.47.237.139:30080
 
 5. Deploy the secret and deployment:
   * ```kubectl create -f secret.yaml```
