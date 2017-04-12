@@ -1,7 +1,7 @@
 # Simple Makefile to perform simple build/deploy steps for
 # the Flightassist demo application code
 
-.PHONY: localdeploy localctr cfdeploy bxdeploy localimage bximage swarmdeploy clean npm npmupdate swarmdeploy swarmsecrets
+.PHONY: localdeploy localctr cfdeploy bxdeploy localimage bximage swarmdeploy clean npm npmupdate swarmdeploy swarmsecrets swarmstop
 
 BMIX_REGISTRY=registry.ng.bluemix.net
 BMIX_NAMESPACE=$(shell cf ic namespace get)
@@ -55,3 +55,7 @@ swarmdeploy: localimage swarmsecrets
 
 swarmsecrets: create-swarm-secrets.sh
 	./create-swarm-secrets.sh
+
+swarmstop:
+	docker service ls | awk ' { print $2 } ' | grep -v "NAME" | grep "flightassist" | xargs -n 1 docker service rm
+

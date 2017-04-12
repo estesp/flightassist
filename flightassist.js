@@ -8,9 +8,15 @@ var express = require('express'),
     session = require("express-session"),
     http = require('http'),
     path = require('path'),
-    fs = require('fs');
+    fs = require('fs'),
+    bodyParser = require('body-parser');
+
 
 var app = express();
+var conversationMode = false;
+if (process.env.CONVERSATION_MODE === "true") {
+    conversationMode = true;
+}
 
 // if deploying to a different route, update this variable:
 var baseURL = "http://flightassist.mybluemix.net/";
@@ -52,6 +58,7 @@ app.set('views', __dirname + '/views');
 app.set('view engine', 'ejs');
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(session({ secret: 'wilson dog ball' }));
+app.use(bodyParser.json()); // support json encoded bodies
 
 app.get('/', routes.index);
 
@@ -62,7 +69,8 @@ app.get("/authorize", function(req, res) {
 var tripdata = require('./routes/tripdata.js'),
     tripit = require('./tripit.js'),
     flightstats = require('./flightstats.js'),
-    weather = require('./weather.js');
+    weather = require('./weather.js'),
+    conversation = require('./conversation.js');
 
 app.get("/flights", function(req, res) {
     var respData = {};
@@ -84,7 +92,13 @@ app.get("/flights", function(req, res) {
             respData.home = profile.Profile.home_city;
             console.log("Received profile info for " + respData.name + ". Rendering response..");
             req.session.user = respData.name;
-            res.render("trips", respData);
+            // we have our static (older) view of travel details, or the
+            // Watson powered "conversation" mode
+            if (conversationMode === true) {
+                res.render("conversation", respData);
+            } else {
+                res.render("trips", respData);
+            }
         }, function(error) {
             console.log(error);
             respData.message = "Could not retrieve TripIt profile, error: " + error.data;
@@ -122,6 +136,9 @@ app.get("/i/conninfo", flightstats.getConnections);
 
 // weather endpoint
 app.get("/i/weather", weather.getThreeDayForecast);
+
+// Watson conversation service endpoint
+app.post("/conversation", conversation.Message);
 
 var server = http.createServer(app).listen(app.get('port'), function() {
     console.log('FlightAssist server listening on port ' + app.get('port'));
