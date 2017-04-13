@@ -29,6 +29,11 @@ remove_secret tripit_api_key
 remove_secret tripit_api_secret
 remove_secret cloudant_url
 remove_secret weather_url
+if [ "${CONVERSATION_MODE}" == "true" ]; then
+	remove_secret watson_username
+	remove_secret watson_password
+	remove_secret conv_workspace_id
+fi
 
 # since we have sourced our ".env" file, we can just echo the values
 # and pipe to the secret create command via STDIN
@@ -38,3 +43,8 @@ echo "${TRIPIT_API_KEY}" | docker secret create tripit_api_key -
 echo "${TRIPIT_API_SECRET}" | docker secret create tripit_api_secret -
 echo "${CLOUDANT_URL}" | docker secret create cloudant_url -
 echo "${WEATHER_URL}" | docker secret create weather_url -
+if [ "${CONVERSATION_MODE}" == "true" ]; then
+	echo "${WATSON_USERNAME}" | docker secret create watson_username -
+	echo "${WATSON_PASSWORD}" | docker secret create watson_password -
+	echo "${CONV_WORKSPACE_ID}" | docker secret create conv_workspace_id -
+fi
