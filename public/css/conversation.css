@@ -178,7 +178,7 @@ div {
 .from-watson.latest.top p:before {
   content: ".";
   color: #9855D4;
-  background-image: url("../img/marker_image.png");
+  background-image: url("/images/marker_image.png");
   background-size: 0.3125rem 1.3125rem;
   position: absolute;
   z-index: 2;

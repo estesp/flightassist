@@ -1,7 +1,7 @@
 // javascript to handle getting trip data and showing possible flights
 // and alternatives
 
-function parseTripsForFlights() {
+function parseTripsForFlights(showAlternates) {
     // notify searching
     $('#throbber-div-1').css("display", "block");
     $('#flight-results').css("display", "none");
@@ -98,7 +98,9 @@ function parseTripsForFlights() {
             var startTime = makeDateTimeString(upcomingFlights[0].StartDateTime);
             var idAlternates = startAirport + "_" + endAirport + "_" + startTime;
             $('#flight-alternates').append("<div id='" + idAlternates + "' class='alternateConnections'></div>");
-            $('#flight-alternates').trigger('instantiate');
+            if (showAlternates) {
+                $('#flight-alternates').trigger('instantiate');
+            }
         }
     });
 }
@@ -300,9 +302,6 @@ $(document).ready(function() {
             $(childDiv[0]).html(resultsStart + htmlOut + "</div>");
         });
     });
-
-    //begin parse routine for flight data
-    parseTripsForFlights();
 });
 
 function filterFlights(alternateFlights) {
