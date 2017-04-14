@@ -9,6 +9,7 @@
     <meta property="og:title" content="Conversation Chat Simple" />
     <meta property="og:description" content="FlightAssist demo application using Watson Conversation API" />
     <link rel="stylesheet" href="css/conversation.css">
+    <link rel="stylesheet" href="css/flightassist.css">
 </head>
 
 <body>
@@ -25,14 +26,27 @@
         </div>
         <div id="flight-output-column" class="fixed-column content-column">
             <div id="flight-information">
-
+                <div id="flight-results">
+                    <!-- trip data will be loaded here -->>
+                </div>
+                <div class="throbber-div" id="throbber-div-1">
+                    <img src="/images/throbber.gif" class="ajax-loader" />
+                </div>
+                <div id="flight-alternates">
+                    <!-- alternate flight data will be loaded here -->>
+                </div>
+                <div class="throbber-div" id="throbber-div-2">
+                    <img src="/images/throbber.gif" class="ajax-loader" />
+                </div>
             </div>
         </div>
     </div>
-
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/mustache.js"></script>
     <script src="/js/common.js"></script>
     <script src="/js/api.js"></script>
     <script src="/js/conversation.js"></script>
+    <script src="/js/trips.js"></script>
     <script src="/js/global.js"></script>
 </body>
 
