@@ -1,7 +1,7 @@
 // javascript to handle getting trip data and showing possible flights
 // and alternatives
 
-function parseTripsForFlights(showAlternates) {
+function parseTripsForFlights(showAlternates, retrieveWithoutDisplay) {
     // notify searching
     $('#throbber-div-1').css("display", "block");
     $('#flight-results').css("display", "none");
@@ -9,7 +9,9 @@ function parseTripsForFlights(showAlternates) {
     // first we need trip data..
     ajaxCall("/i/tripdata", "GET", function(respData) {
         $('#throbber-div-1').css("display", "none");
-        $('#flight-results').css("display", "block");
+        if (!retrieveWithoutDisplay) {
+            $('#flight-results').css("display", "block");
+        }
         var epochms = Date.now();
         var date = new Date(epochms);
         var today = date.getFullYear() + "-" + twoDigitString(date.getMonth() + 1) + "-" + twoDigitString(date.getDate() + 1);
@@ -269,38 +271,7 @@ $(document).ready(function() {
         var childDiv = $(this).children("div");
         var infoArray = childDiv[0].id.split("_");
         // default to 12 hours of search from depart time; 25 total results max
-        var qURL = "/i/conninfo?depairport=" + infoArray[0] + "&arrairport=" + infoArray[1] + "&numhours=12&results=25" +
-            "&date=" + infoArray[2] + "&includeCodeshares=false";
-        ajaxCall(qURL, "GET", function(respData) {
-            // need to filter the results to get rid of duplicate to our existing flight
-            // reservation and any other possible filtering (codeshares should be removed by the query)
-            alternativeFlights = filterFlights(respData);
-            $('#throbber-div-2').css("display", "none");
-            $('#flight-alternates').css("display", "block");
-            // run the results through a mustache template and display in the output div
-
-            var resultsStart = "<div class='resultsHeader'>Alternate route options between " +
-                "<span class='airportId'>" + infoArray[0] + "</span> and <span class='airportId'>" +
-                infoArray[1] + "</span>:</div><div class='resultsContainer'>";
-            var htmlOut = "";
-            for (var i = 0; i < alternativeFlights.length; i++) {
-                // output each option in a separate div with a numbered title
-                var opener = "<div class='altoption' id='" + alternativeFlights[i].flightPath + "'>" +
-                    "<div class='optionitem'>Option #" + (i + 1) + " (Total duration: " + alternativeFlights[i].elapsedTime + ")</div>";
-                var results = { searchResults: alternativeFlights[i].flights };
-                var resultsTmpl = "{{#searchResults}}\n" +
-                    "<div class='altflightid'>{{flightID}} <span class='flighttime'>{{duration}}</span></div>" +
-                    "<div class='altflightresults'>" +
-                    "<span class='airportFrom'>{{departureAirport}}</span>&nbsp;\u21D2&nbsp;<span class='airportTo'>{{arrivalAirport}}</span>" +
-                    "</div>" +
-                    "<div class='altflightTime'><span class='fieldTitle'>Departs:</span> {{departs}}</div>" +
-                    "<div class='altflightTime'><span class='fieldTitle'>Arrives:</span> {{arrives}}</div>\n" +
-                    "{{/searchResults}}";
-
-                htmlOut = htmlOut + opener + Mustache.render(resultsTmpl, results) + "</div>";
-            }
-            $(childDiv[0]).html(resultsStart + htmlOut + "</div>");
-        });
+        outputAlternateFlights(childDiv[0], infoArray[0], infoArray[1], infoArray[2], 12, 25);
     });
 });
 
@@ -377,6 +348,41 @@ function createAlternateRoute(connectionEntry, curFlightPath, airportTZData) {
     route.flights = flights;
     route.flightPath = flightPath;
     return route;
+}
+
+function outputAlternateFlights(outputElement, depAirport, arrAirport, date, hours, numResults) {
+    var qURL = "/i/conninfo?depairport=" + depAirport + "&arrairport=" + arrAirport + "&numhours=" +
+        hours + "&results=" + numResults + "&date=" + date + "&includeCodeshares=false";
+    ajaxCall(qURL, "GET", function(respData) {
+        // need to filter the results to get rid of duplicate to our existing flight
+        // reservation and any other possible filtering (codeshares should be removed by the query)
+        alternativeFlights = filterFlights(respData);
+        $('#throbber-div-2').css("display", "none");
+        $('#flight-alternates').css("display", "block");
+        // run the results through a mustache template and display in the output div
+
+        var resultsStart = "<div class='resultsHeader'>Alternate route options between " +
+            "<span class='airportId'>" + depAirport + "</span> and <span class='airportId'>" +
+            arrAirport + "</span>:</div><div class='resultsContainer'>";
+        var htmlOut = "";
+        for (var i = 0; i < alternativeFlights.length; i++) {
+            // output each option in a separate div with a numbered title
+            var opener = "<div class='altoption' id='" + alternativeFlights[i].flightPath + "'>" +
+                "<div class='optionitem'>Option #" + (i + 1) + " (Total duration: " + alternativeFlights[i].elapsedTime + ")</div>";
+            var results = { searchResults: alternativeFlights[i].flights };
+            var resultsTmpl = "{{#searchResults}}\n" +
+                "<div class='altflightid'>{{flightID}} <span class='flighttime'>{{duration}}</span></div>" +
+                "<div class='altflightresults'>" +
+                "<span class='airportFrom'>{{departureAirport}}</span>&nbsp;\u21D2&nbsp;<span class='airportTo'>{{arrivalAirport}}</span>" +
+                "</div>" +
+                "<div class='altflightTime'><span class='fieldTitle'>Departs:</span> {{departs}}</div>" +
+                "<div class='altflightTime'><span class='fieldTitle'>Arrives:</span> {{arrives}}</div>\n" +
+                "{{/searchResults}}";
+
+            htmlOut = htmlOut + opener + Mustache.render(resultsTmpl, results) + "</div>";
+        }
+        $(outputElement).html(resultsStart + htmlOut + "</div>");
+    });
 }
 
 function humanElapsedTime(minutes) {

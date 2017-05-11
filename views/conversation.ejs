@@ -10,6 +10,11 @@
     <meta property="og:description" content="FlightAssist demo application using Watson Conversation API" />
     <link rel="stylesheet" href="css/conversation.css">
     <link rel="stylesheet" href="css/flightassist.css">
+<style>
+ .altoption {
+	 background: #839fd2 !important;
+ }
+</style>
 </head>
 
 <body>
@@ -17,23 +22,25 @@
         <div id="chat-column-holder" class="responsive-column content-column">
             <div class="chat-column">
                 <div id="scrollingChat"></div>
-                <label for="textInput" class="inputOutline">
-          <input id="textInput" class="input responsive-column"
-            placeholder="Ask a question about your upcoming travel" type="text"
-            onkeydown="ConversationPanel.inputKeyDown(event, this)">
-        </label>
+				<div id="inputBox" style="bottom: 0%; position: fixed; width: 80%;">
+                   <label for="textInput" class="inputOutline">
+                      <input id="textInput" class="input responsive-column"
+                             placeholder="Ask a question about your upcoming travel" type="text"
+                             onkeydown="ConversationPanel.inputKeyDown(event, this)">
+                    </label>
+				</div>
             </div>
         </div>
-        <div id="flight-output-column" class="fixed-column content-column">
+        <div id="flight-output-column" class="fixed-column content-column" style="width: 50%;">
             <div id="flight-information">
                 <div id="flight-results">
-                    <!-- trip data will be loaded here -->>
+                    <!-- trip data will be loaded here -->
                 </div>
                 <div class="throbber-div" id="throbber-div-1">
                     <img src="/images/throbber.gif" class="ajax-loader" />
                 </div>
                 <div id="flight-alternates">
-                    <!-- alternate flight data will be loaded here -->>
+                    <!-- alternate flight data will be loaded here -->
                 </div>
                 <div class="throbber-div" id="throbber-div-2">
                     <img src="/images/throbber.gif" class="ajax-loader" />
