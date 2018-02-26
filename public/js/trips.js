@@ -98,7 +98,7 @@ function parseTripsForFlights(showAlternates, retrieveWithoutDisplay) {
             var startAirport = upcomingFlights[0].start_airport_code;
             var endAirport = upcomingFlights[upcomingFlights.length - 1].end_airport_code;
             var startTime = makeDateTimeString(upcomingFlights[0].StartDateTime);
-            var idAlternates = startAirport + "_" + endAirport + "_" + startTime;
+            var idAlternates = startAirport + "_" + endAirport + "_" + encodeURIComponent(startTime);
             $('#flight-alternates').append("<div id='" + idAlternates + "' class='alternateConnections'></div>");
             if (showAlternates) {
                 $('#flight-alternates').trigger('instantiate');
@@ -289,9 +289,21 @@ function filterFlights(alternateFlights) {
     var airportTZData = {};
     for (var g = 0; g < alternateFlights.appendix.airports.length; g++) {
         var airportName = alternateFlights.appendix.airports[g].fs;
-        var offsetHrs = "" + alternateFlights.appendix.airports[g].utcOffsetHours;
-        // API returns items like "-4"; we need "-04:00"; make the modifications to the string
-        offsetHrs = offsetHrs.substr(0, 1) + "0" + offsetHrs.substr(1) + ":00";
+        // API returns an integer like "-4"; we need something in the form "-04:00":
+        var offsetHrs = alternateFlights.appendix.airports[g].utcOffsetHours;
+        var prefix = "";
+        if (offsetHrs >= 0) {
+            prefix = "+";
+            if (offsetHrs < 10) {
+                prefix += "0";
+            }
+        } else {
+            prefix = "-";
+            if (offsetHrs < 10) {
+                prefix += "0";
+            }
+        }
+        offsetHrs = prefix + Math.abs(offsetHrs) + ":00";
         airportTZData[airportName] = offsetHrs;
     }
     for (var i = 0; i < alternateFlights.connections.length; i++) {
