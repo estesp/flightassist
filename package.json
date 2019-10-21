@@ -6,13 +6,13 @@
 		"start": "node flightassist.js"
 	},
 	"dependencies": {
-		"body-parser": "*",
+		"body-parser": "^1.19.0",
 		"cfenv": "1.0.x",
 		"cloudant": "*",
-		"ejs": "*",
-		"express": "^4.16.4",
-		"express-session": "*",
-		"flightstats": "*",
+		"ejs": "^2.7.1",
+		"express": "^4.17.1",
+		"express-session": "^1.17.0",
+		"flightstats": "^0.20.0",
 		"tripit-node": "*"
 	},
 	"engines": {
