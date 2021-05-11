@@ -7,7 +7,7 @@
 	},
 	"dependencies": {
 		"body-parser": "^1.19.0",
-		"cfenv": "1.2.x",
+		"cfenv": "1.2.4",
 		"cloudant": "*",
 		"ejs": "^2.7.1",
 		"express": "^4.17.1",
@@ -16,8 +16,8 @@
 		"tripit-node": "*"
 	},
 	"engines": {
-		"node": "^7.8.0",
-		"npm": "^4.2.0"
+		"node": "^10.19.0",
+		"npm": "^7.12.1"
 	},
 	"repository": {}
 }
