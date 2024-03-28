@@ -10,7 +10,7 @@
 		"cfenv": "1.2.4",
 		"cloudant": "*",
 		"ejs": "^3.1.7",
-		"express": "^4.17.3",
+		"express": "^4.19.2",
 		"express-session": "^1.17.0",
 		"flightstats": "^0.20.0",
 		"tripit-node": "*"
